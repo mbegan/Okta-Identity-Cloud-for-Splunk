@@ -14,7 +14,7 @@
 !bin/TA_Okta_Identity_Cloud_for_Splunk_rh_account.py
 !bin/ta_okta_identity_cloud_for_splunk_declare.py
 !default/*
-!metadata/*
+!metadata/default.meta
 !static/*
 !README/*
 !README.txt
