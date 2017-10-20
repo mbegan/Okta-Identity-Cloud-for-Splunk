@@ -1,0 +1,23 @@
+# Ignore everything
+*
+
+# But not these files because they matter
+!.gitignore
+!bin/ta_okta_identity_cloud_for_splunk/modalert_oktaUserStatusChange_helper.py
+!bin/ta_okta_identity_cloud_for_splunk/modalert_oktaGroupMemberChange_helper.py
+!bin/oktaUserStatusChange.py
+!bin/oktaGroupMemberChange.py
+!bin/okta_identity_cloud.py
+!bin/input_module_okta_identity_cloud.py
+!bin/TA_Okta_Identity_Cloud_for_Splunk_rh_settings.py
+!bin/TA_Okta_Identity_Cloud_for_Splunk_rh_okta_identity_cloud.py
+!bin/TA_Okta_Identity_Cloud_for_Splunk_rh_account.py
+!bin/ta_okta_identity_cloud_for_splunk_declare.py
+!default/*
+!metadata/*
+!static/*
+!README/*
+!README.txt
+
+# ...even if they are in subdirectories
+!*/

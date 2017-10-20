@@ -1,0 +1,51 @@
+[savedsearches/Okta2%20app%20group]
+version = 6.5.2
+modtime = 1503524180.510479000
+
+[passwords/credential%3A__REST_CREDENTIAL__%23TA-Okta_Identity_Cloud_for_Splunk%23configs%2Fconf-ta_okta_identity_cloud_for_splunk_account%3Aoktaprise%60%60splunk_cred_sep%60%601%3A]
+owner = admin
+version = 6.5.2
+modtime = 1506400153.362685000
+
+[passwords/credential%3A__REST_CREDENTIAL__%23TA-Okta_Identity_Cloud_for_Splunk%23configs%2Fconf-ta_okta_identity_cloud_for_splunk_account%3Aoktaprise%60%60splunk_cred_sep%60%602%3A]
+owner = admin
+version = 6.5.2
+modtime = 1506400153.368582000
+
+[ta_okta_identity_cloud_for_splunk_account/oktaprise]
+owner = admin
+version = 6.5.2
+modtime = 1506400153.380642000
+
+[inputs/okta_identity_cloud%3A%2F%2Fokp1_logs]
+owner = admin
+version = 6.5.2
+modtime = 1506400180.199274000
+
+[ta_okta_identity_cloud_for_splunk_settings/additional_parameters]
+version = 6.5.2
+modtime = 1506401061.100145000
+
+[ta_okta_identity_cloud_for_splunk_settings/logging]
+version = 6.5.2
+modtime = 1506401096.366405000
+
+[passwords/credential%3A__REST_CREDENTIAL__%23TA-Okta_Identity_Cloud_for_Splunk%23configs%2Fconf-ta_okta_identity_cloud_for_splunk_account%3Amattegantest%60%60splunk_cred_sep%60%601%3A]
+owner = matt.egan@oktaprise.com
+version = 6.5.2
+modtime = 1508361792.795535000
+
+[passwords/credential%3A__REST_CREDENTIAL__%23TA-Okta_Identity_Cloud_for_Splunk%23configs%2Fconf-ta_okta_identity_cloud_for_splunk_account%3Amattegantest%60%60splunk_cred_sep%60%602%3A]
+owner = matt.egan@oktaprise.com
+version = 6.5.2
+modtime = 1508361792.801687000
+
+[ta_okta_identity_cloud_for_splunk_account/mattegantest]
+owner = matt.egan@oktaprise.com
+version = 6.5.2
+modtime = 1508361792.813582000
+
+[inputs/okta_identity_cloud%3A%2F%2Fmet1_logs]
+owner = matt.egan@oktaprise.com
+version = 6.5.2
+modtime = 1508361821.640470000
