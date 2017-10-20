@@ -468,6 +468,7 @@ def _collectLogs(helper):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_collectLogs Invoked")
+    helper.log_debug("I'm on the Development Branch!!!")
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']
     resource = "/logs"
