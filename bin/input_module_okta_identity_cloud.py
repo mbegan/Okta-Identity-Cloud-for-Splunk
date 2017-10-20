@@ -139,7 +139,7 @@ def _write_oktaResults(helper, ew, results):
         )
         ew.write_event(event)
 
-def _okta_caller(helper, resource, params, method):
+def _okta_caller(helper, resource, params, method, limit):
     #this calls the _okta_client with baked URL's
     #makes pagination calls
     opt_metric = helper.get_arg('metric')
@@ -169,6 +169,11 @@ def _okta_caller(helper, resource, params, method):
         max_log_batch = int(helper.get_global_setting('max_log_batch'))
     except:
         max_log_batch = 6000
+
+    try:
+        fetchEmptyPages = bool(helper.get_global_setting('fetch_empty_pages'))
+    except:
+        fetchEmptyPages = bool(false)      
     
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
@@ -176,12 +181,21 @@ def _okta_caller(helper, resource, params, method):
         response = _okta_client(helper, n_val, {}, method)
         n_val = str(response['n_val'])
         results += response['results']
+        i_count = int(len(response['results']))
         r_count = int(len(results))
         helper.log_debug(log_metric + "_okta_caller has returned " + (str(r_count)) + " results so far, fetching next page: " + n_val)
         if ( (opt_metric == "log") and ( r_count >= max_log_batch) ): 
             helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of " + n_val)
             helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
             myCon = False
+        if (r_count < limit):
+            helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
+            if (opt_metric == "log"):
+                helper.log_info(log_metric + "_okta_caller has collected all available logs, stashing returned results and n_val of " + n_val)
+                helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
+                myCon = False
+            elif (fetchEmptyPages):
+                myCon = False
         
     return results
 
@@ -194,6 +208,10 @@ def _okta_client(helper, url, params, method):
     userAgent = "Splunk-AddOn/2.0b"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']    
+    try:
+        reqTimeout = int(helper.get_global_setting('http_request_timeout'))
+    except:
+        reqTimeout = 90    
     
     headers = { 'Authorization': 'SSWS ' + okta_token, 
                 'User-Agent': userAgent, 
@@ -207,7 +225,7 @@ def _okta_client(helper, url, params, method):
                url, method, parameters=params, 
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
-               timeout=90, use_proxy=False
+               timeout=reqTimeout, use_proxy=False
             )
     else:
         helper.log_debug("This is NOT cloud instance, allow use of proxy if configured")
@@ -216,7 +234,7 @@ def _okta_client(helper, url, params, method):
                url, method, parameters=params, 
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
-               timeout=90
+               timeout=reqTimeout
             )
 
     # get the response headers
@@ -267,7 +285,7 @@ def _collectUsers(helper):
     cp_prefix = global_account['name']
     resource = "/users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'        
     start_date = helper.get_check_point((cp_prefix + "users_lastUpdated"))
@@ -278,7 +296,7 @@ def _collectUsers(helper):
 
     myfilter = 'lastUpdated gt "' + start_date + '" and lastUpdated lt "' + end_date + '"'
     params = {'filter': myfilter, 'limit': opt_limit}
-    users = _okta_caller(helper, resource, params, method)
+    users = _okta_caller(helper, resource, params, method, opt_limit)
 
     if ( len(users) > 0 ):
         lastUpdated = _fromIso8601ToUnix(users[-1]['lastUpdated'])
@@ -306,7 +324,7 @@ def _collectGroups(helper):
     cp_prefix = global_account['name']    
     resource = "/groups"
     method = "Get"        
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'
     start_lastUpdated = helper.get_check_point((cp_prefix + "groups_lastUpdated"))
@@ -324,7 +342,7 @@ def _collectGroups(helper):
      " and " + end_date + " or membershipUpdated between " + start_lastMembershipUpdated + " and " + end_date)
     myfilter = "( " + lastUpdated + " or " + lastMembershipUpdated + " )"
     params = {'filter': myfilter, 'limit': opt_limit, 'expand': 'stats,app'}
-    groups = _okta_caller(helper, resource, params, method)
+    groups = _okta_caller(helper, resource, params, method, opt_limit)
         
     if ( len(groups) > 0 ):
         lastUpdated = _fromIso8601ToUnix(start_lastUpdated)
@@ -383,9 +401,9 @@ def _collectGroupUsers(helper, gid):
     helper.log_debug(log_metric + "_collectGroupUsers has been invoked: " + gid )
     resource = "/groups/" + gid + "/skinny_users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     params = {'limit': opt_limit}
-    groupUsers = _okta_caller(helper, resource, params, method)
+    groupUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
     members = []
     for groupUser in groupUsers:
@@ -399,9 +417,9 @@ def _collectGroupApps(helper, gid):
     helper.log_debug(log_metric + " _collectGroupApps has been invoked for: " + gid )
     resource = "/groups/" + gid + "/apps"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     params = {'limit': opt_limit}
-    groupApps = _okta_caller(helper, resource, params, method)
+    groupApps = _okta_caller(helper, resource, params, method, opt_limit)
     
     assignedApps = []
     for groupApp in groupApps:
@@ -414,10 +432,10 @@ def _collectApps(helper):
     log_metric = "metric=" + opt_metric + " | message="
     
     helper.log_debug(log_metric + "_collectApps has been invoked")
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     resource = "/apps"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     params = {'limit': opt_limit, 'filter': 'status eq "ACTIVE"'}
     apps = _okta_caller(helper, resource, params, method)
     
@@ -437,9 +455,9 @@ def _collectAppUsers(helper, aid):
     helper.log_debug(log_metric + "_collectAppUsers has been invoked: " + aid )
     resource = "/apps/" + aid + "/skinny_users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(helper.get_arg('limit'))
     params = {'limit': opt_limit}
-    appUsers = _okta_caller(helper, resource, params, method)
+    appUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
     assigned_users = []
     for appUser in appUsers:
@@ -453,9 +471,9 @@ def _collectAppGroups(helper, aid):
     helper.log_debug(log_metric + "_collectAppGroups has been invoked: " + aid )
     resource = "/apps/" + aid + "/groups"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(int(helper.get_arg('limit')))
     params = {'limit': opt_limit}
-    appGroups = _okta_caller(helper, resource, params, method)
+    appGroups = _okta_caller(helper, resource, params, method, opt_limit)
     
     assigned_groups = []
     for appGroup in appGroups:
@@ -468,7 +486,6 @@ def _collectLogs(helper):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_collectLogs Invoked")
-    helper.log_debug("I'm on the Development Branch!!!")
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']
     resource = "/logs"
@@ -508,7 +525,7 @@ def _collectLogs(helper):
         since = dtsince.isoformat()[:-3] + 'Z'
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
 
-    logs = _okta_caller(helper, resource, params, method)
+    logs = _okta_caller(helper, resource, params, method, opt_limit)
     
     lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
     if ((len(logs)) > 0):
