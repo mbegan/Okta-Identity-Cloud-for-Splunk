@@ -176,12 +176,12 @@ def _okta_caller(helper, resource, params, method, limit):
     
     try:
         fetchEmptyPages = bool(helper.get_global_setting('fetch_empty_pages'))
-        helper.log_debug(log_metric + "_okta_caller has defined fetch_empty_pages value of: " + (str(fetch_empty_pages)))
+        helper.log_info(log_metric + "_okta_caller has defined fetch_empty_pages value of: " + (str(fetch_empty_pages)))
     except:
         fetchEmptyPages = bool(False)
-        helper.log_debug(log_metric + "_okta_caller has default fetch_empty_pages value of: " + (str(fetch_empty_pages)))
+        helper.log_info(log_metric + "_okta_caller has default fetch_empty_pages value of: " + (str(fetch_empty_pages)))
 
-    helper.log_debug(log_metric + "_okta_caller has just done some fetch empty pages stuff")
+    helper.log_info(log_metric + "_okta_caller has just done some fetch empty pages stuff")
 
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
