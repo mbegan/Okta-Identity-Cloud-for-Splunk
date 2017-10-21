@@ -167,15 +167,17 @@ def _okta_caller(helper, resource, params, method, limit):
     '''
     try:
         max_log_batch = int(helper.get_global_setting('max_log_batch'))
+        helper.log_debug(log_metric + "_okta_caller has a defined max_log_batch value of: " + (str(max_log_batch)))
     except:
         max_log_batch = 6000
-    helper.log_debug(log_metric + "_okta_caller has max_log_batch value of: " + (str(max_log_batch)))
+        helper.log_debug(log_metric + "_okta_caller has a default max_log_batch value of: " + (str(max_log_batch)))
 
     try:
         fetchEmptyPages = bool(helper.get_global_setting('fetch_empty_pages'))
+        helper.log_debug(log_metric + "_okta_caller has defined fetch_empty_pages value of: " + (str(fetch_empty_pages)))
     except:
-        fetchEmptyPages = bool(false)      
-    helper.log_debug(log_metric + "_okta_caller has fetch_empty_pages value of: " + (str(fetch_empty_pages)))
+        fetchEmptyPages = bool(false)
+        helper.log_debug(log_metric + "_okta_caller has default fetch_empty_pages value of: " + (str(fetch_empty_pages)))
     
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
