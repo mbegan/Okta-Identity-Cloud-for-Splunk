@@ -188,7 +188,7 @@ def _okta_caller(helper, resource, params, method, limit):
             helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of " + n_val)
             helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
             myCon = False
-        if ( (i_count < limit) and (!fetchEmptyPages) ):
+        if ( (i_count < limit) and (fetchEmptyPages == False) ):
             helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
             if (opt_metric == "log"):
                 helper.log_info(log_metric + "_okta_caller has collected all available logs, stashing returned results and n_val of " + n_val)
