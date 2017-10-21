@@ -1,0 +1,166 @@
+<form>
+	<label>Okta Stats</label>
+	<fieldset submitButton="true">
+		<input type="time" token="mytime">
+			<label>Time Range</label>
+			<default>
+				<earliest>-60m@m</earliest>
+				<latest>now</latest>
+			</default>
+		</input>
+		<input type="text" token="mycount">
+			<label># to show</label>
+			<default>10</default>
+		</input>
+		<input type="multiselect" token="myhost">
+			<label>Okta Org to display</label>
+                        <search>
+                                <query>sourcetype="oktaim2:log" | stats count by host | sort -count</query>
+                                <earliest>$mytime.earliest$</earliest>
+                                <latest>$mytime.latest$</latest>
+                        </search>
+			<choice value="*">All</choice>
+                        <fieldForLabel>host</fieldForLabel>
+                        <fieldForValue>host</fieldForValue>
+                        <prefix>(</prefix>
+                        <valuePrefix>host="</valuePrefix>
+                        <valueSuffix>"</valueSuffix>
+                        <delimiter> OR </delimiter>
+                        <suffix>)</suffix>
+                        <default>*</default>
+		</input>
+		<input type="multiselect" token="myoutcome">
+                        <search>
+                                <query>sourcetype="oktaim2:log" eventType=user.session.start| stats count by outcome.result | sort -count</query>
+                                <earliest>$mytime.earliest$</earliest>
+                                <latest>$mytime.latest$</latest>
+                        </search>
+			<choice value="*">All</choice>
+                        <fieldForLabel>outcome.result</fieldForLabel>
+                        <fieldForValue>outcome.result</fieldForValue>
+                        <prefix>(</prefix>
+                        <valuePrefix>outcome.result="</valuePrefix>
+                        <valueSuffix>"</valueSuffix>
+                        <delimiter> OR </delimiter>
+                        <suffix>)</suffix>
+                        <default>*</default>
+		</input>
+	</fieldset>
+	<row>
+		<panel>
+			<title>Top $mycount$ Apps in Last $mytime.earliest$ where $myhost$</title>
+			<chart>
+				<search>
+					<query>sourcetype="oktaim2:log" event_type="okta_event_authentication" $myhost$ | top $mycount$ app</query>
+					<earliest>$mytime.earliest$</earliest>
+					<latest>$mytime.latest$</latest>
+				</search>
+				<option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+				<option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+				<option name="charting.axisTitleX.visibility">visible</option>
+				<option name="charting.axisTitleY.visibility">visible</option>
+				<option name="charting.axisTitleY2.visibility">visible</option>
+				<option name="charting.axisX.scale">linear</option>
+				<option name="charting.axisY.scale">linear</option>
+				<option name="charting.axisY2.enabled">0</option>
+				<option name="charting.axisY2.scale">inherit</option>
+				<option name="charting.chart">pie</option>
+				<option name="charting.chart.bubbleMaximumSize">50</option>
+				<option name="charting.chart.bubbleMinimumSize">10</option>
+				<option name="charting.chart.bubbleSizeBy">area</option>
+				<option name="charting.chart.nullValueMode">gaps</option>
+				<option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+				<option name="charting.chart.stackMode">default</option>
+				<option name="charting.chart.style">shiny</option>
+				<option name="charting.drilldown">none</option>
+				<option name="charting.layout.splitSeries">0</option>
+				<option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+				<option name="charting.legend.placement">right</option>
+			</chart>
+		</panel>
+	</row>
+	<row>
+		<panel>
+			<title>Top $mycount$ Users in Last $mytime.earliest$ where $myhost$</title>
+			<chart>
+				<search>
+					<query>sourcetype="oktaim2:log" eventType="user.session.start" $myhost$| top $mycount$ user</query>
+					<earliest>$mytime.earliest$</earliest>
+					<latest>$mytime.latest$</latest>
+				</search>
+				<option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+				<option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+				<option name="charting.axisTitleX.visibility">visible</option>
+				<option name="charting.axisTitleY.visibility">visible</option>
+				<option name="charting.axisTitleY2.visibility">visible</option>
+				<option name="charting.axisX.scale">linear</option>
+				<option name="charting.axisY.scale">linear</option>
+				<option name="charting.axisY2.enabled">0</option>
+				<option name="charting.axisY2.scale">inherit</option>
+				<option name="charting.chart">pie</option>
+				<option name="charting.chart.bubbleMaximumSize">50</option>
+				<option name="charting.chart.bubbleMinimumSize">10</option>
+				<option name="charting.chart.bubbleSizeBy">area</option>
+				<option name="charting.chart.nullValueMode">gaps</option>
+				<option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+				<option name="charting.chart.stackMode">default</option>
+				<option name="charting.chart.style">shiny</option>
+				<option name="charting.drilldown">none</option>
+				<option name="charting.layout.splitSeries">0</option>
+				<option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+				<option name="charting.legend.placement">right</option>
+			</chart>
+		</panel>
+	</row>
+        <row>
+                <panel>
+                <table>
+                        <title>Top $mycount$ logins by IP where $myoutcome$ AND $myhost$</title>
+                                <search>
+					<query>sourcetype="oktaim2:log" eventType="user.session.start" $myoutcome$ $myhost$| stats count by client.ipAddress,actor.alternateId | top $mycount$ client.ipAddress</query>
+                                        <earliest>$mytime.earliest$</earliest>
+                                        <latest>$mytime.latest$</latest>
+                                </search>
+                        <option name="wrap">true</option>
+                        <option name="rowNumbers">false</option>
+                        <option name="dataOverlayMode">none</option>
+                        <option name="drilldown">cell</option>
+                        <option name="count">$mycount$</option>
+                </table>
+                </panel>
+        </row>
+        <row>
+                <panel>
+                <table>
+                        <title>Top $mycount$ logins by User where $myoutcome$ AND $myhost$</title>
+                                <search>
+					<query>sourcetype="oktaim2:log" eventType="user.session.start" $myoutcome$ $myhost$ | top $mycount$ user</query>
+                                        <earliest>$mytime.earliest$</earliest>
+                                        <latest>$mytime.latest$</latest>
+                                </search>
+                        <option name="wrap">true</option>
+                        <option name="rowNumbers">false</option>
+                        <option name="dataOverlayMode">none</option>
+                        <option name="drilldown">cell</option>
+                        <option name="count">$mycount$</option>
+                </table>
+                </panel>
+        </row>
+        <row>
+                <panel>
+                <table>
+                        <title>Top $mycount$ eventTypes, by User where $myoutcome$ AND $myhost$</title>
+                                <search>
+					<query>sourcetype="oktaim2:log" outcome.result=* $myoutcome$ $myhost$ | stats count by eventType, displayMessage | sort -count</query>
+                                        <earliest>$mytime.earliest$</earliest>
+                                        <latest>$mytime.latest$</latest>
+                                </search>
+                        <option name="wrap">true</option>
+                        <option name="rowNumbers">false</option>
+                        <option name="dataOverlayMode">none</option>
+                        <option name="drilldown">cell</option>
+                        <option name="count">$mycount$</option>
+                </table>
+                </panel>
+        </row>
+</form>

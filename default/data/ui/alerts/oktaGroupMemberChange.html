@@ -1,0 +1,41 @@
+<form class="form-horizontal form-complex">
+<div class="control-group">
+	<label class="control-label" for="oktaGroupMemberChange_okta_org">Okta Org <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.oktaGroupMemberChange.param.okta_org" id="oktaGroupMemberChange_okta_org"/>
+                <span class="help-block"> 
+                    Okta Org URL (your.okta.com)
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="oktaGroupMemberChange_user_id">User Id <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.oktaGroupMemberChange.param.user_id" id="oktaGroupMemberChange_user_id"/>
+                <span class="help-block"> 
+                    Okta User ID for target user
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="oktaGroupMemberChange_group_id">Group Id <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.oktaGroupMemberChange.param.group_id" id="oktaGroupMemberChange_group_id"/>
+                <span class="help-block"> 
+                    Okta ID for Target Group
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="oktaGroupMemberChange_action">action <span class="required">*</span> </label>
+    <div class="controls">
+<select name="action.oktaGroupMemberChange.param.action" id="oktaGroupMemberChange_action">
+        <option value="remove">remove</option>
+        <option value="add">add</option>
+</select>
+                <span class="help-block"> 
+                    Action to perform (add or remove)
+                </span>
+    </div>
+</div>
+</form>
