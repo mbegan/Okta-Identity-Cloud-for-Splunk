@@ -29,8 +29,8 @@ fields = [
         encrypted=False,
         default='default',
         validator=validator.String(
-            max_len=80, 
             min_len=1, 
+            max_len=80, 
         )
     ), 
     field.RestField(
