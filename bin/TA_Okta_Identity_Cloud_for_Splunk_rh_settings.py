@@ -174,11 +174,14 @@ fields_additional_parameters = [
     ), 
     field.RestField(
         'fetch_empty_pages',
-        required=False,
+        required=True,
         encrypted=False,
-        default=False,
-        validator=None
-    )
+        default='False',
+        validator=validator.String(
+            max_len=8192, 
+            min_len=0, 
+        )
+    ) 
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
 
