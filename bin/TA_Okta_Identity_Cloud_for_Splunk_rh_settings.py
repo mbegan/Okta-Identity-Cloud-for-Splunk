@@ -34,8 +34,8 @@ fields_proxy = [
         encrypted=False,
         default=None,
         validator=validator.String(
-            min_len=0, 
             max_len=4096, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -44,8 +44,8 @@ fields_proxy = [
         encrypted=False,
         default=None,
         validator=validator.Number(
-            min_val=1, 
             max_val=65535, 
+            min_val=1, 
         )
     ), 
     field.RestField(
@@ -54,8 +54,8 @@ fields_proxy = [
         encrypted=False,
         default=None,
         validator=validator.String(
-            min_len=0, 
             max_len=50, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -64,8 +64,8 @@ fields_proxy = [
         encrypted=True,
         default=None,
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -98,8 +98,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='6000',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -108,8 +108,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='200',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -118,8 +118,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='200',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -128,8 +128,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='200',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -138,8 +138,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='100',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -148,8 +148,8 @@ fields_additional_parameters = [
         encrypted=False,
         default='7',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
     ), 
     field.RestField(
@@ -158,9 +158,26 @@ fields_additional_parameters = [
         encrypted=False,
         default='20',
         validator=validator.String(
-            min_len=0, 
             max_len=8192, 
+            min_len=0, 
         )
+    ), 
+    field.RestField(
+        'http_request_timeout',
+        required=True,
+        encrypted=False,
+        default='90',
+        validator=validator.String(
+            max_len=8192, 
+            min_len=0, 
+        )
+    ), 
+    field.RestField(
+        'fetch_empty_pages',
+        required=False,
+        encrypted=False,
+        default=False,
+        validator=None
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')

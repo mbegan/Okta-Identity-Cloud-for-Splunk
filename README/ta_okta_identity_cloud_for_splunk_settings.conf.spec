@@ -18,3 +18,5 @@ app_limit =
 log_limit = 
 log_history = 
 throttle_threshold = 
+http_request_timeout = 
+fetch_empty_pages = 
