@@ -8,10 +8,44 @@
 				<latest>now</latest>
 			</default>
 		</input>
+		<input type="multiselect" token="source" >
+			<label>source</label>
+			<search>
+				<query>index="_internal" source=*okta* | stats count by source | sort -count</query>
+				<earliest>$mytime.earliest$</earliest>
+				<latest>$mytime.latest$</latest>
+			</search>	
+			<fieldForLabel>source</fieldForLabel>
+			<fieldForValue>source</fieldForValue>
+			<choice value="*">All</choice>
+			<prefix>(</prefix>
+			<valuePrefix>source="</valuePrefix>
+			<valueSuffix>"</valueSuffix>
+			<delimiter> OR </delimiter>
+			<suffix>)</suffix>
+			<default>*</default>
+		</input>
+		<input type="multiselect" token="sourcetype" >
+			<label>sourcetype</label>
+			<search>
+				<query>index="_internal" $source$ sourcetype=*okta* | stats count by sourcetype | sort -count</query>
+				<earliest>$mytime.earliest$</earliest>
+				<latest>$mytime.latest$</latest>
+			</search>	
+			<fieldForLabel>sourcetype</fieldForLabel>
+			<fieldForValue>sourcetype</fieldForValue>
+			<choice value="*">All</choice>
+			<prefix>(</prefix>
+			<valuePrefix>sourcetype="</valuePrefix>
+			<valueSuffix>"</valueSuffix>
+			<delimiter> OR </delimiter>
+			<suffix>)</suffix>
+			<default>*</default>
+		</input>
 		<input type="multiselect" token="pid" >
 			<label>PID (Process ID)</label>
 			<search>
-				<query>index="_internal" sourcetype="ta_okta_identity_cloud*" | stats count by pid | sort -count</query>
+				<query>index="_internal" $source$ $sourcetype$ | stats count by pid | sort -count</query>
 				<earliest>$mytime.earliest$</earliest>
 				<latest>$mytime.latest$</latest>
 			</search>	
@@ -28,7 +62,7 @@
 		<input type="multiselect" token="metric" >
 			<label>Metric (Input Type)</label>
 			<search>
-				<query>index="_internal" sourcetype="ta_okta_identity_cloud*" | stats count by metric | sort -count</query>
+				<query>index="_internal" $source$ $sourcetype$ | stats count by metric | sort -count</query>
 				<earliest>$mytime.earliest$</earliest>
 				<latest>$mytime.latest$</latest>
 			</search>	
@@ -48,7 +82,7 @@
 		<table>
 			<title>Processes with Errors</title>
 				<search>
-					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" ERROR $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
+					<query>index="_internal" $source$ $sourcetype$ ERROR $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
 					<earliest>$mytime.earliest$</earliest>
 					<latest>$mytime.latest$</latest>
 				</search>
@@ -65,7 +99,7 @@
 		<table>
 			<title>All Processes</title>
 				<search>
-					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
+					<query>index="_internal" $source$ $sourcetype$ $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
 					<earliest>$mytime.earliest$</earliest>
 					<latest>$mytime.latest$</latest>
 				</search>
