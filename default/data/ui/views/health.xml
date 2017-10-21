@@ -25,13 +25,30 @@
 			<suffix>)</suffix>
 			<default>*</default>
 		</input>
+		<input type="multiselect" token="metric" >
+			<label>Metric (Input Type)</label>
+			<search>
+				<query>index="_internal" sourcetype="ta_okta_identity_cloud*" | stats count by metric | sort -count</query>
+				<earliest>$mytime.earliest$</earliest>
+				<latest>$mytime.latest$</latest>
+			</search>	
+			<fieldForLabel>metric</fieldForLabel>
+			<fieldForValue>metric</fieldForValue>
+			<choice value="*">All</choice>
+			<prefix>(</prefix>
+			<valuePrefix>metric="</valuePrefix>
+			<valueSuffix>"</valueSuffix>
+			<delimiter> OR </delimiter>
+			<suffix>)</suffix>
+			<default>*</default>
+		</input>
 	</fieldset>
 	<row>
 		<panel>
 		<table>
 			<title>Processes with Errors</title>
 				<search>
-					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" ERROR $pid$ | table pid,_time,_raw | sort -_time</query>
+					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" ERROR $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
 					<earliest>$mytime.earliest$</earliest>
 					<latest>$mytime.latest$</latest>
 				</search>
@@ -48,7 +65,7 @@
 		<table>
 			<title>All Processes</title>
 				<search>
-					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" $pid$ | table pid,_time,_raw | sort -_time</query>
+					<query>index="_internal" sourcetype="ta_okta_identity_cloud*" $pid$ $metric$ | table pid,_time,_raw | sort -_time</query>
 					<earliest>$mytime.earliest$</earliest>
 					<latest>$mytime.latest$</latest>
 				</search>
