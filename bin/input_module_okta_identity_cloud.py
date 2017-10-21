@@ -169,11 +169,13 @@ def _okta_caller(helper, resource, params, method, limit):
         max_log_batch = int(helper.get_global_setting('max_log_batch'))
     except:
         max_log_batch = 6000
+    helper.log_debug(log_metric + "_okta_caller has max_log_batch value of: " + (str(max_log_batch)))
 
     try:
         fetchEmptyPages = bool(helper.get_global_setting('fetch_empty_pages'))
     except:
         fetchEmptyPages = bool(false)      
+    helper.log_debug(log_metric + "_okta_caller has fetch_empty_pages value of: " + (str(fetch_empty_pages)))
     
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
