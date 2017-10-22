@@ -200,7 +200,6 @@ def _okta_caller(helper, resource, params, method, limit):
     response = _okta_client(helper, url, params, method)
     n_val = str(response.pop('n_val', 'None'))
     results = response.pop('results', {})
-    helper.log_debug("MATT! limit has a value of: " + str(limit) + " and a type of: " + str(type(limit)) )
     
     '''
         if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
