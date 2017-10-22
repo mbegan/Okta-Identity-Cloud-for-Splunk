@@ -110,7 +110,8 @@ def _getSetting(helper, setting):
         'throttle_threshold': 25.0,
         'http_request_timeout': 90, 
         'fetch_empty_pages': False,
-        'use_now_for_until': True 
+        'use_now_for_until': True,
+        'skip_empty_pages': True
     }
 
     # early fail if the setting we've been asked for isn't something we know about
@@ -205,8 +206,15 @@ def _okta_caller(helper, resource, params, method, limit):
         For other endpoints page and return when complete... (no good way to page and continue)
     '''
 
-    max_log_batch = _getSetting(helper,'max_log_batch')
-    fetchEmptyPages = _getSetting(helper,'fetch_empty_pages')
+    try:
+        max_log_batch = int(_getSetting(helper,'max_log_batch'))
+    except print(0):
+        max_log_batch = int(6000)
+    
+    try:
+        skipEmptyPages = bool(_getSetting(helper,'skip_empty_pages'))
+    except:
+        skipEmptyPages = bool(True)
 
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
@@ -221,13 +229,18 @@ def _okta_caller(helper, resource, params, method, limit):
             helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of " + n_val)
             helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
             myCon = False
-        if ( (i_count < limit) and (fetchEmptyPages == False) ):
+        # If this iterations retrieve value is lower than the limit
+        # we can be sure we are at the end of the result
+        if i_count < limit:
             helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
-            if (opt_metric == "log"):
-                helper.log_info(log_metric + "_okta_caller has collected all available logs, stashing returned results and n_val of " + n_val)
-                helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
-            myCon = False
-
+            # if skipEmptyPages is set we can just skip fetching that page
+            if skipEmptyPages:
+                helper.log_info(log_metric + "_okta_caller has collected all available data, since skipEmptyPages is true we'll not be collecting " + n_val + " at this time")
+                myCon = False
+                if (opt_metric == "log"):
+                    helper.log_info(log_metric + "_okta_caller is stashing returned results and n_val of " + n_val)
+                    helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
+            
     return results
 
 def _okta_client(helper, url, params, method):
@@ -278,13 +291,13 @@ def _okta_client(helper, url, params, method):
     try:
         results = response.json()
     except:
-        sendBack = { 'results': {}, 'n_val': 0 }
+        sendBack = { 'results': {}, 'n_val': None }
         return sendBack
     
     if response.status_code == 429:
         helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : requestid : " + requestid)
         _rateLimitEnforce(helper, r_headers, response.status_code)
-        sendBack = { 'results': {}, 'n_val': 0 }
+        sendBack = { 'results': {}, 'n_val': None }
         return sendBack
     
     helper.log_debug(log_metric + "_okta_client returned response to requestid : " + requestid)
@@ -305,7 +318,7 @@ def _okta_client(helper, url, params, method):
         n_val = response.links['next']['url']
         helper.log_debug(log_metric + "_okta_client sees another page at this URL: " + n_val )
     else:
-        n_val = 0
+        n_val = None
         
     sendBack = { 'results': results, 'n_val': n_val }
     return sendBack
