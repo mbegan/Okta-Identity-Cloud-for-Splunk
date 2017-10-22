@@ -99,8 +99,7 @@ def _getSetting(helper, setting):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_getSetting Invoked")
-    myDefaults =
-    {
+    myDefaults = {
         'max_log_batch': 6000,
         'user_limit': 200,
         'group_limit': 200,
