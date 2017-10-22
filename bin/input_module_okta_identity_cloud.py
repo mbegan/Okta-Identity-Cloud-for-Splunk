@@ -95,6 +95,38 @@ def _rateLimitEnforce(helper, headers, rc):
         helper.log_error(log_metric + "_rateLimitEnforce is going to pause for 1 second now as an unknown error was indicated (not an http response code)" )
         time.sleep(1)
 
+def _getSetting(helper, setting):
+    opt_metric = helper.get_arg('metric')
+    log_metric = "metric=" + opt_metric + " | message="
+    helper.log_debug(log_metric + "_getSetting Invoked")
+    myDefaults =
+    {
+        'max_log_batch': 6000,
+        'user_limit': 200,
+        'group_limit': 200,
+        'app_limit': 200,
+        'log_limit': 100,
+        'log_history': 7,
+        'throttle_threshold': 25.0,
+        'http_request_timeout': 90, 
+        'fetch_empty_pages': False,
+        'use_now_for_until': True 
+    }
+
+    if not myDefaults[setting]:
+        helper.log_error(log_metric + "_getSetting has no way of finding values for: " + str(setting))
+        return None
+    else:
+        helper.log_info(log_metric + "_getSetting is looking for values for: " + str(setting))
+
+    try:
+        myVal = helper.get_global_setting(setting)
+        helper.log_debug(log_metric + "_getSetting has a defined " + setting " value of: " + str(myVal))
+    except:
+        max_log_batch = myDefaults[setting]
+        helper.log_debug(log_metric + "_getSetting has a default " + setting " value of: " + str(myVal))
+    return myVal
+
 def _write_oktaResults(helper, ew, results):
     global_account = helper.get_arg('global_account')
     okta_org = global_account['username']
@@ -497,18 +529,15 @@ def _collectLogs(helper):
     resource = "/logs"
     method = "Get"    
     dtnow = datetime.now()
-    
-    try:
-        opt_limit = int(helper.get_global_setting('log_limit'))
-    except:
-        opt_limit = 100
 
-    try:
-        opt_history = int(helper.get_global_setting('log_history'))
-    except:
-        opt_history = 7
-    
-    until = dtnow.isoformat()[:-3] + 'Z'
+    opt_limit = _getSetting(helper,'log_limit')
+    opt_history = _getSetting(helper,'log_history')
+
+    if (_getSetting(helper,'use_now_for_until')):
+        until = 'now'
+    else:
+        until = dtnow.isoformat()[:-3] + 'Z'
+
     since = helper.get_check_point((cp_prefix + "logs_since"))
     n_val = helper.get_check_point((cp_prefix + "logs_n_val"))
     
