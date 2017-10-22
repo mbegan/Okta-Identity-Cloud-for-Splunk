@@ -62,9 +62,10 @@ def _rateLimitEnforce(helper, headers, rc):
         # percentage to start throttling at
         
         try:
-            throttle = float(helper.get_global_setting('throttle_threshold'))
+            throttle = _getSetting(helper,'throttle_threshold')
+            throttle = float(throttle)
         except:
-            throttle=20.0
+            throttle=float(20.0)
         
         #divide by zero is no good
         if myRemaining == 0:
@@ -202,23 +203,9 @@ def _okta_caller(helper, resource, params, method, limit):
         if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
         For other endpoints page and return when complete... (no good way to page and continue)
     '''
-    try:
-        max_log_batch = int(helper.get_global_setting('max_log_batch'))
-        helper.log_debug(log_metric + "_okta_caller has a defined max_log_batch value of: " + (str(max_log_batch)))
-    except:
-        max_log_batch = 6000
-        helper.log_debug(log_metric + "_okta_caller has a default max_log_batch value of: " + (str(max_log_batch)))
 
-    helper.log_debug(log_metric + "_okta_caller is about to do some fetch empty pages stuff")
-    
-    try:
-        fetchEmptyPages = bool(helper.get_global_setting('fetch_empty_pages'))
-        helper.log_info(log_metric + "_okta_caller has defined fetch_empty_pages value of: " + (str(fetch_empty_pages)))
-    except:
-        fetchEmptyPages = bool(False)
-        helper.log_info(log_metric + "_okta_caller has default fetch_empty_pages value of: " + (str(fetch_empty_pages)))
-
-    helper.log_info(log_metric + "_okta_caller has just done some fetch empty pages stuff")
+    max_log_batch = _getSetting(helper,'max_log_batch')
+    fetchEmptyPages = _getSetting(helper,'fetch_empty_pages')
 
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
@@ -251,11 +238,8 @@ def _okta_client(helper, url, params, method):
     userAgent = "Splunk-AddOn/2.0b"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']    
-    try:
-        reqTimeout = int(helper.get_global_setting('http_request_timeout'))
-    except:
-        reqTimeout = 90    
-    
+    reqTimeout = _getSetting(helper,'http_request_timeout')
+
     headers = { 'Authorization': 'SSWS ' + okta_token, 
                 'User-Agent': userAgent, 
                 'Content-Type': 'application/json', 
@@ -619,8 +603,10 @@ def collect_events(helper, ew):
     #Confirm are values are within an acceptable range
 
     try:
+        #limVar becomes log_limit, user_limit etc
         limVar = opt_metric + '_limit'
-        opt_limit = int(helper.get_global_setting( limVar ))
+        opt_limit = _getSetting(helper, limVar )
+        opt_limit = int(opt_limit)
     except:
         opt_limit = limits[opt_metric]['defSize']
         
