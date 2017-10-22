@@ -238,8 +238,13 @@ def _okta_client(helper, url, params, method):
     userAgent = "Splunk-AddOn/2.0b"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']    
-    reqTimeout = _getSetting(helper,'http_request_timeout')
-
+    
+    try:
+        reqTimeout = float(_getSetting(helper,'http_request_timeout'))
+    except:
+        helper.log_debug(log_metric + "_okta_client using coded timeout value")
+        reqTimeout = float(90)
+        
     headers = { 'Authorization': 'SSWS ' + okta_token, 
                 'User-Agent': userAgent, 
                 'Content-Type': 'application/json', 
