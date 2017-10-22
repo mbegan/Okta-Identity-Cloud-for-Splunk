@@ -232,8 +232,8 @@ def _okta_caller(helper, resource, params, method, limit):
             myCon = False
         # If this iterations retrieve value is lower than the limit
         # we can be sure we are at the end of the result
-        helper.log_debug("MATT! limit has a value of: " + str(limit) + " and a value of: " + str(type(limit)) )
-        helper.log_debug("MATT! limit has a value of: " + str(i_count) + " and a value of: " + str(type(i_count)) )
+        helper.log_debug("MATT! limit has a value of: " + str(limit) + " and a type of: " + str(type(limit)) )
+        helper.log_debug("MATT! i_count has a value of: " + str(i_count) + " and a type of: " + str(type(i_count)) )
         if i_count < limit:
             helper.log_debug("MATT! limit: " + str(limit) + " is greater than i_count: " + str(i_count) )
             helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
