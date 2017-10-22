@@ -113,7 +113,8 @@ def _getSetting(helper, setting):
         'use_now_for_until': True 
     }
 
-    if not myDefaults[setting]:
+    # early fail if the setting we've been asked for isn't something we know about
+    if setting not in myDefaults:
         helper.log_error(log_metric + "_getSetting has no way of finding values for: " + str(setting))
         return None
     else:
@@ -244,7 +245,7 @@ def _okta_client(helper, url, params, method):
     except:
         helper.log_debug(log_metric + "_okta_client using coded timeout value")
         reqTimeout = float(90)
-        
+
     headers = { 'Authorization': 'SSWS ' + okta_token, 
                 'User-Agent': userAgent, 
                 'Content-Type': 'application/json', 
