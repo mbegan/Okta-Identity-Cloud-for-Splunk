@@ -208,7 +208,7 @@ def _okta_caller(helper, resource, params, method, limit):
 
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
-    except print(0):
+    except:
         max_log_batch = int(6000)
     
     try:
