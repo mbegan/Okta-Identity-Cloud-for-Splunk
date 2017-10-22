@@ -120,10 +120,10 @@ def _getSetting(helper, setting):
 
     try:
         myVal = helper.get_global_setting(setting)
-        helper.log_debug(log_metric + "_getSetting has a defined " + setting " value of: " + str(myVal))
+        helper.log_debug(log_metric + "_getSetting has a defined " + setting + " value of: " + str(myVal))
     except:
         max_log_batch = myDefaults[setting]
-        helper.log_debug(log_metric + "_getSetting has a default " + setting " value of: " + str(myVal))
+        helper.log_debug(log_metric + "_getSetting has a default " + setting + " value of: " + str(myVal))
     return myVal
 
 def _write_oktaResults(helper, ew, results):
