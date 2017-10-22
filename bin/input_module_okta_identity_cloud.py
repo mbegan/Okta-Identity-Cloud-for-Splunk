@@ -243,7 +243,10 @@ def _okta_caller(helper, resource, params, method, limit):
                 myCon = False
                 if (opt_metric == "log"):
                     helper.log_info(log_metric + "_okta_caller is stashing returned results and n_val of " + n_val)
-                    helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
+                    if n_val is None:
+                        helper.log_info(log_metric + "_okta_caller n_val was NoneType so we aren't stashing)
+                    else:
+                        helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
         else:
             helper.log_debug("MATT! limit: " + str(limit) + " is lesser than i_count: " + str(i_count) )
             
