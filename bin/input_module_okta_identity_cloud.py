@@ -231,7 +231,6 @@ def _okta_caller(helper, resource, params, method, limit):
             myCon = False
         # If this iterations retrieve value is lower than the limit
         # we can be sure we are at the end of the result
-        helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
         if i_count < limit:
             helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
             # if skipEmptyPages is set we can just skip fetching that page
