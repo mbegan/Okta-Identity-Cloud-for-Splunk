@@ -216,7 +216,7 @@ def _okta_caller(helper, resource, params, method, limit):
     
     #determine if and what the next pages is and retrieve as required
     while(getPages):
-        n_val = str(response.pop('n_val', None))
+        n_val = str(response.pop('n_val', False))
         i_results = response.pop('results', {})
         helper.log_debug(log_metric + "_okta_caller i_results is: " + str(type((i_results))) + " and results is: " + str(type(results)) + " the same?")
         i_count = int(len(i_results))
@@ -230,7 +230,7 @@ def _okta_caller(helper, resource, params, method, limit):
             helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type((n_val))) + " and value is: " + str(n_val) + " seem right?")
             getPages = False
             if "log" == opt_metric:
-                if n_val is None:
+                if not n_val:
                     #store the current URL, we may be dealing with a slow org
                     helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
                     stashNVal = url
@@ -261,7 +261,7 @@ def _okta_caller(helper, resource, params, method, limit):
                 helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
                 getPages = False
         else:
-            if stashNVal is None:
+            if not stashNVal:
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
             else:
                 helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
@@ -317,7 +317,7 @@ def _okta_client(helper, url, params, method):
     try:
         results = response.json()
     except:
-        sendBack = { 'results': {}, 'n_val': None }
+        sendBack = { 'results': {}, 'n_val': False }
         return sendBack
     
     if response.status_code == 429:
@@ -345,7 +345,7 @@ def _okta_client(helper, url, params, method):
         n_val = response.links['next']['url']
         helper.log_info(log_metric + "_okta_client sees another page at this URL: " + n_val )
     else:
-        n_val = None
+        n_val = False
         
     sendBack = { 'results': results, 'n_val': n_val }
     return sendBack
