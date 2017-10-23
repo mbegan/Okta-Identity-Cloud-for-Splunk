@@ -190,32 +190,7 @@ def _okta_caller(helper, resource, params, method, limit):
     cp_prefix = global_account['name']
     okta_org = global_account['username']
     myValidPattern = ("https://" + okta_org + "/api/")
-
-    #if I get a full URL as resource use it
-    if resource.startswith(myValidPattern):
-        url = resource
-    else:
-        url = "https://" + okta_org + "/api/v1" + resource
-
-    response = _okta_client(helper, url, params, method)
-    n_val = str(response.pop('n_val', None))
-    results = response.pop('results', {})
-    i_count = int(len(results))
-
-    if ( ("log" == opt_metric) and (0 == i_count) ):
-        if n_val is None:
-            #store the current URL, we may be dealing with a slow org
-            helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
-            helper.save_check_point((cp_prefix + "logs_n_val"), url)
-        else:
-            #store the value of n_val, might be a 429 case
-            helper.log_info(log_metric + "_okta_caller n_val was Defined with 0 results, probably 429 store n_val: " + n_val)
-            helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
-        
-    '''
-        if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
-        For other endpoints page and return when complete... (no good way to page and continue)
-    '''
+    #settings
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
     except:
@@ -226,35 +201,68 @@ def _okta_caller(helper, resource, params, method, limit):
     except:
         skipEmptyPages = bool(True)
 
-    myCon = True
-    while ((n_val.startswith(myValidPattern)) and (myCon)):
-        helper.log_debug(log_metric + "_okta_caller fetching next page: " + n_val)
-        url = n_val
-        response = _okta_client(helper, url, {}, method)
+    #if I get a full URL as resource use it
+    if resource.startswith(myValidPattern):
+        url = resource
+    else:
+        url = "https://" + okta_org + "/api/v1" + resource
+
+    #set this early, are we getting more pages, assume yes
+    getPages = True
+    results = {}
+    
+    #make a first call
+    response = _okta_client(helper, url, params, method)
+    
+    #determine if and what the next pages is and retrieve as required
+    while(getPages):
         n_val = str(response.pop('n_val', None))
-        i_res = response.pop('results', {})
-        results += i_res
-        i_count = int(len(i_res))
+        i_results = response.pop('results', {})
+        i_count = int(len(i_results))
+        results += i_results
         r_count = int(len(results))
-        helper.log_debug(log_metric + "_okta_caller has returned " + (str(r_count)) + " results so far, fetching next page: " + n_val)
-        if ( (opt_metric == "log") and ( r_count >= max_log_batch) ): 
-            helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of " + n_val)
-            helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
-            myCon = False
-        # If this iterations retrieve value is lower than the limit
-        # we can be sure we are at the end of the result
-        if i_count < limit:
-            helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
-            # if skipEmptyPages is set we can just skip fetching that page
+        helper.log_debug(log_metric + "_okta_caller returned: " + str(i_count) + " this pass and: " + str(r_count) + " results so far")
+        helper.log_debug(log_metric + "_okta_caller Iteration Count: " + str(i_count) + " Limit " + limit)
+
+        #special case here for 0 and logs
+        if 0 == i_count:
+            getPages = False
+            if "log" == opt_metric:
+                if n_val is None:
+                    #store the current URL, we may be dealing with a slow org
+                    helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
+                    stashNVal = url
+                else:
+                    #429 case, penalty has been paid already but lets bail anyhow and pickup on next iteration
+                    helper.log_info(log_metric + "_okta_caller n_val was Defined with 0 results, probably 429 store n_val: " + n_val)
+                    stashNVal = n_val
+        elif i_count < limit:
+            helper.log_info(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates an empty next page: " + n_val)
             if skipEmptyPages:
-                helper.log_info(log_metric + "_okta_caller has collected all available data, since skipEmptyPages is true we'll not be collecting " + n_val + " at this time")
-                myCon = False
-                if (opt_metric == "log"):
+                getPages = False
+                if "logs" == opt_metric:
                     helper.log_info(log_metric + "_okta_caller is stashing returned results and n_val of " + n_val)
-                    if n_val is None:
-                        helper.log_info(log_metric + "_okta_caller n_val was NoneType so we aren't stashing")
-                    else:
-                        helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
+                    stashNVal = n_val
+        if "log" == opt_metric:
+            if r_count >= max_log_batch:
+                getPages = False
+                helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of: " + n_val)
+                stashNVal = n_val
+
+        if getPages:
+            if n_val.startswith(myValidPattern):
+                helper.log_info(log_metric + "_okta_caller we will be getting the next page: " + n_val)
+                url = n_val
+                response = _okta_client(helper, url, {}, method)
+            else:
+                helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
+                getPages = False
+        else:
+            if stashNVal is None:
+                helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal)
+            else:
+                helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal)
+                helper.save_check_point((cp_prefix + "logs_n_val"), stashNVal)
             
     return results
 
