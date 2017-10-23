@@ -277,7 +277,7 @@ def _okta_client(helper, url, params, method):
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
     userAgent = "Splunk-AddOn/2.0b"
     global_account = helper.get_arg('global_account')
-    okta_token = global_account['password']    
+    okta_token = global_account['password']
     
     try:
         reqTimeout = float(_getSetting(helper,'http_request_timeout'))
@@ -285,16 +285,16 @@ def _okta_client(helper, url, params, method):
         helper.log_debug(log_metric + "_okta_client using coded timeout value")
         reqTimeout = float(90)
 
-    headers = { 'Authorization': 'SSWS ' + okta_token, 
-                'User-Agent': userAgent, 
-                'Content-Type': 'application/json', 
+    headers = { 'Authorization': 'SSWS ' + okta_token,
+                'User-Agent': userAgent,
+                'Content-Type': 'application/json',
                 'accept': 'application/json' }
-                
+
     if ServerInfo.is_cloud_instance:
         helper.log_debug("This is a cloud instance, disable use of proxy")
         response = helper.send_http_request \
            (
-               url, method, parameters=params, 
+               url, method, parameters=params,
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
                timeout=reqTimeout, use_proxy=False
@@ -303,7 +303,7 @@ def _okta_client(helper, url, params, method):
         helper.log_debug("This is NOT cloud instance, allow use of proxy if configured")
         response = helper.send_http_request \
            (
-               url, method, parameters=params, 
+               url, method, parameters=params,
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
                timeout=reqTimeout
@@ -312,7 +312,7 @@ def _okta_client(helper, url, params, method):
     # get the response headers
     r_headers = response.headers
     requestid = r_headers.pop('X-Okta-Request-Id','None')
-    
+
     #try catch except
     try:
         results = response.json()
