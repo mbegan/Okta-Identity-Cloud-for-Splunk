@@ -259,9 +259,9 @@ def _okta_caller(helper, resource, params, method, limit):
                 getPages = False
         else:
             if stashNVal is None:
-                helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
+                helper.log_warning(log_metric + "_okta_caller next link value was noneType " + stashNVal)
             else:
-                helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
+                helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + stashNVal)
                 helper.save_check_point((cp_prefix + "logs_n_val"), stashNVal)
             
     return results
