@@ -215,6 +215,11 @@ def _okta_caller(helper, resource, params, method, limit):
     response = _okta_client(helper, url, params, method)
     
     #determine if and what the next pages is and retrieve as required
+    myThis = str("false")
+    myThisBool = bool(myThis)
+    helper.log_debug("Matt has mythis: " + myThis + " it has a type of: " str(type(myThis)) )
+    helper.log_debug("Matt has mythisbool: " + str(myThisBool) + " it has a type of: " + str(type(myThisBool)) )
+
     while(getPages):
         n_val = str(response.pop('n_val', False))
         i_results = response.pop('results', {})
@@ -227,10 +232,11 @@ def _okta_caller(helper, resource, params, method, limit):
 
         #special case here for 0 and logs
         if 0 == i_count:
-            helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type((n_val))) + " and value is: " + str(n_val) + " seem right?")
+            helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type(n_val)) + " and value is: " + str(n_val) + " seem right?")
+            helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type(bool(n_val))) + " and value is: " + str(bool(n_val)) + " seem right?")
             getPages = False
             if "log" == opt_metric:
-                if not bool(n_val):
+                if ( ( not bool(n_val)) or ("False" == n_val ) ):
                     #store the current URL, we may be dealing with a slow org
                     helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
                     stashNVal = url
@@ -261,7 +267,7 @@ def _okta_caller(helper, resource, params, method, limit):
                 helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
                 getPages = False
         else:
-            if not bool(stashNVal):
+            if  bool(stashNVal):
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
             else:
                 helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
