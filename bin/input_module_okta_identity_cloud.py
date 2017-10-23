@@ -209,7 +209,7 @@ def _okta_caller(helper, resource, params, method, limit):
 
     #set this early, are we getting more pages, assume yes
     getPages = True
-    results = dict()
+    results = list()
     
     #make a first call
     response = _okta_client(helper, url, params, method)
