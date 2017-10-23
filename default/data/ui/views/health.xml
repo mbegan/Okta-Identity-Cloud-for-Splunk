@@ -11,7 +11,7 @@
 		<input type="multiselect" token="source" >
 			<label>source</label>
 			<search>
-				<query>index="_internal" source=*okta* | stats count by source | sort -count</query>
+				<query>index="_internal" source=*okta_identity* | stats count by source | sort -count</query>
 				<earliest>$mytime.earliest$</earliest>
 				<latest>$mytime.latest$</latest>
 			</search>	
@@ -28,7 +28,7 @@
 		<input type="multiselect" token="sourcetype" >
 			<label>sourcetype</label>
 			<search>
-				<query>index="_internal" $source$ sourcetype=*okta* | stats count by sourcetype | sort -count</query>
+				<query>index="_internal" $source$ sourcetype=*okta_identity* | stats count by sourcetype | sort -count</query>
 				<earliest>$mytime.earliest$</earliest>
 				<latest>$mytime.latest$</latest>
 			</search>	
