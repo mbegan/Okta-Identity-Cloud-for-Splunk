@@ -230,7 +230,7 @@ def _okta_caller(helper, resource, params, method, limit):
             helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type((n_val))) + " and value is: " + str(n_val) + " seem right?")
             getPages = False
             if "log" == opt_metric:
-                if not n_val:
+                if not bool(n_val):
                     #store the current URL, we may be dealing with a slow org
                     helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
                     stashNVal = url
@@ -261,7 +261,7 @@ def _okta_caller(helper, resource, params, method, limit):
                 helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
                 getPages = False
         else:
-            if not stashNVal:
+            if not bool(stashNVal):
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
             else:
                 helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
