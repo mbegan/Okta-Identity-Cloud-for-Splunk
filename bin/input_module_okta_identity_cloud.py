@@ -40,7 +40,7 @@ def _rateLimitEnforce(helper, headers, rc):
     try:
         myReset = int(headers['X-Rate-Limit-Reset'])
         myRemaining = float(headers['X-Rate-Limit-Remaining'])
-        myLimit = float(headers['X-Rate-Limit-Limit'])        
+        myLimit = float(headers['X-Rate-Limit-Limit'])
         mySecLeft = int(myReset - myTimeStamp)
         myPctLeft = float(100 * myRemaining / myLimit)
     except KeyError:
@@ -48,7 +48,7 @@ def _rateLimitEnforce(helper, headers, rc):
         myRemaining = int(100)
         mySecLeft = int(60)
         myPctLeft = float(50.0)
-    
+
     helper.log_debug(log_metric + "_rateLimitEnforce Invoked. There are " + str(mySecLeft) + " seconds left in the window and we have " + str(myPctLeft) + " percent of the limit available.  The response code returned was " + str(rc) )
     if rc == 429:
         #the rate limit is exhausted, sleep
@@ -60,27 +60,27 @@ def _rateLimitEnforce(helper, headers, rc):
         # how many calls per second do we assume are happening
         cps=4
         # percentage to start throttling at
-        
+
         try:
             throttle = _getSetting(helper,'throttle_threshold')
             throttle = float(throttle)
         except:
             throttle=float(20.0)
-        
+
         #divide by zero is no good
         if myRemaining == 0:
             myRemaining = 1
-        
+
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
             sleepTime = mySecLeft * cps / myRemaining
         else:
             sleepTime = mySecLeft * cps / myRemaining / 100
-            
+ 
         #never sleep much longer than reset time, saftey factor of 7 seconds
         if sleepTime > (mySecLeft + 7):
             sleepTime = mySecLeft + 7
-        
+
         if myPctLeft < throttle:
             helper.log_warning(log_metric + "_rateLimitEnforce is now pausing operations for " + str(sleepTime) + " to avoid exhausting the rate limit" )
             time.sleep(sleepTime)
@@ -108,7 +108,7 @@ def _getSetting(helper, setting):
         'log_limit': 100,
         'log_history': 7,
         'throttle_threshold': 25.0,
-        'http_request_timeout': 90, 
+        'http_request_timeout': 90,
         'fetch_empty_pages': False,
         'use_now_for_until': True,
         'skip_empty_pages': True
@@ -185,27 +185,37 @@ def _okta_caller(helper, resource, params, method, limit):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_caller Invoked")
-    
+
     global_account = helper.get_arg('global_account')
-    cp_prefix = global_account['name']    
+    cp_prefix = global_account['name']
     okta_org = global_account['username']
     myValidPattern = ("https://" + okta_org + "/api/")
-    
+
     #if I get a full URL as resource use it
     if resource.startswith(myValidPattern):
         url = resource
     else:
         url = "https://" + okta_org + "/api/v1" + resource
-        
-    response = _okta_client(helper, url, params, method)
-    n_val = str(response.pop('n_val', 'None'))
-    results = response.pop('results', {})
 
+    response = _okta_client(helper, url, params, method)
+    n_val = str(response.pop('n_val', None))
+    results = response.pop('results', {})
+    i_count = int(len(results))
+
+    if ( ("log" == opt_metric) and (0 == i_count) ):
+        if n_val is None:
+            #store the current URL, we may be dealing with a slow org
+            helper.log_info(log_metric + "_okta_caller n_val was NoneType with 0 results, store current URL as n_val: " + url )
+            helper.save_check_point((cp_prefix + "logs_n_val"), url)
+        else:
+            #store the value of n_val, might be a 429 case
+            helper.log_info(log_metric + "_okta_caller n_val was Defined with 0 results, probably 429 store n_val: " + n_val)
+            helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
+        
     '''
         if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
         For other endpoints page and return when complete... (no good way to page and continue)
     '''
-
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
     except:
@@ -219,10 +229,12 @@ def _okta_caller(helper, resource, params, method, limit):
     myCon = True
     while ((n_val.startswith(myValidPattern)) and (myCon)):
         helper.log_debug(log_metric + "_okta_caller fetching next page: " + n_val)
-        response = _okta_client(helper, n_val, {}, method)
-        n_val = str(response['n_val'])
-        results += response['results']
-        i_count = int(len(response['results']))
+        url = n_val
+        response = _okta_client(helper, url, {}, method)
+        n_val = str(response.pop('n_val', None))
+        i_res = response.pop('results', {})
+        results += i_res
+        i_count = int(len(i_res))
         r_count = int(len(results))
         helper.log_debug(log_metric + "_okta_caller has returned " + (str(r_count)) + " results so far, fetching next page: " + n_val)
         if ( (opt_metric == "log") and ( r_count >= max_log_batch) ): 
@@ -300,7 +312,8 @@ def _okta_client(helper, url, params, method):
     if response.status_code == 429:
         helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : requestid : " + requestid)
         _rateLimitEnforce(helper, r_headers, response.status_code)
-        sendBack = { 'results': {}, 'n_val': None }
+        # If we hit a 429 send back the current url as the n_val, we will pick up from there next time.
+        sendBack = { 'results': {}, 'n_val': url }
         return sendBack
     
     helper.log_debug(log_metric + "_okta_client returned response to requestid : " + requestid)
@@ -319,7 +332,7 @@ def _okta_client(helper, url, params, method):
     helper.log_debug(log_metric + " _okta_client Returned: " + count + " records")
     if 'next' in response.links:
         n_val = response.links['next']['url']
-        helper.log_debug(log_metric + "_okta_client sees another page at this URL: " + n_val )
+        helper.log_info(log_metric + "_okta_client sees another page at this URL: " + n_val )
     else:
         n_val = None
         
