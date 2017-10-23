@@ -240,8 +240,9 @@ def _okta_caller(helper, resource, params, method, limit):
         elif i_count < limit:
             helper.log_info(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates an empty next page: " + n_val)
             if skipEmptyPages:
+                helper.log_debug(log_metric + "_okta_caller skip empty pages is set to true")
                 getPages = False
-                if "logs" == opt_metric:
+                if "log" == opt_metric:
                     helper.log_info(log_metric + "_okta_caller is stashing returned results and n_val of " + n_val)
                     stashNVal = n_val
         if "log" == opt_metric:
