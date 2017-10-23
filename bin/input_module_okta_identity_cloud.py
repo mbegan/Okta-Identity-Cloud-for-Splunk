@@ -217,7 +217,7 @@ def _okta_caller(helper, resource, params, method, limit):
     #determine if and what the next pages is and retrieve as required
     myThis = str("false")
     myThisBool = bool(myThis)
-    helper.log_debug("Matt has mythis: " + myThis + " it has a type of: " str(type(myThis)) )
+    helper.log_debug("Matt has mythis: " + myThis + " it has a type of: " + str(type(myThis)) )
     helper.log_debug("Matt has mythisbool: " + str(myThisBool) + " it has a type of: " + str(type(myThisBool)) )
 
     while(getPages):
