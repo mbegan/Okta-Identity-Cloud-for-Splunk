@@ -200,7 +200,7 @@ def _okta_caller(helper, resource, params, method, limit):
     response = _okta_client(helper, url, params, method)
     n_val = str(response.pop('n_val', 'None'))
     results = response.pop('results', {})
-    
+
     '''
         if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
         For other endpoints page and return when complete... (no good way to page and continue)
@@ -231,10 +231,7 @@ def _okta_caller(helper, resource, params, method, limit):
             myCon = False
         # If this iterations retrieve value is lower than the limit
         # we can be sure we are at the end of the result
-        helper.log_debug("MATT! limit has a value of: " + str(limit) + " and a type of: " + str(type(limit)) )
-        helper.log_debug("MATT! i_count has a value of: " + str(i_count) + " and a type of: " + str(type(i_count)) )
         if i_count < limit:
-            helper.log_debug("MATT! limit: " + str(limit) + " is greater than i_count: " + str(i_count) )
             helper.log_info(log_metric + "_okta_caller only returned " + (str(i_count)) + " results in this call, this indicates an empty next page: " + n_val)
             # if skipEmptyPages is set we can just skip fetching that page
             if skipEmptyPages:
@@ -246,8 +243,6 @@ def _okta_caller(helper, resource, params, method, limit):
                         helper.log_info(log_metric + "_okta_caller n_val was NoneType so we aren't stashing")
                     else:
                         helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
-        else:
-            helper.log_debug("MATT! limit: " + str(limit) + " is lesser than i_count: " + str(i_count) )
             
     return results
 
@@ -578,13 +573,13 @@ def _collectLogs(helper):
 
     logs = _okta_caller(helper, resource, params, method, opt_limit)
     
+    # stash the last UUID and a since value as a failsafe.
+    # Also remove dupes potentially triggered in this failsafe mode
     lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
-    if ((len(logs)) > 0):
-        if (logs[0]['uuid'] == lastUuid):
-            pop = logs.pop(0)
-            helper.log_debug(log_metric + "_collectLogs removing duplicate entry: " + pop['uuid'])
-    
     if ( (len(logs)) > 0 ):
+        if (logs[0]['uuid'] == lastUuid):
+            helper.log_debug(log_metric + "_collectLogs removing duplicate entry: " + pop['uuid'])
+            pop = logs.pop(0)    
         helper.log_debug(log_metric + "_collectLogs checkpoint logs_since: " + logs[-1]['published'] + " and logs_lastUuid: " + logs[-1]['uuid'])
         helper.save_check_point((cp_prefix + "logs_since"), logs[-1]['published'])
         helper.save_check_point((cp_prefix + "logs_lastUuid"), logs[-1]['uuid'])
