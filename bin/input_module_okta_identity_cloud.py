@@ -227,6 +227,7 @@ def _okta_caller(helper, resource, params, method, limit):
 
         #special case here for 0 and logs
         if 0 == i_count:
+            helper.log_debug(log_metric + "_okta_caller next link type is: " + str(type((n_val))) + " and value is: " + str(n_val) + " seem right?")
             getPages = False
             if "log" == opt_metric:
                 if n_val is None:
