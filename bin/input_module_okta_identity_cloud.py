@@ -223,7 +223,7 @@ def _okta_caller(helper, resource, params, method, limit):
         results += i_results
         r_count = int(len(results))
         helper.log_debug(log_metric + "_okta_caller returned: " + str(i_count) + " this pass and: " + str(r_count) + " results so far")
-        helper.log_debug(log_metric + "_okta_caller Iteration Count: " + str(i_count) + " Limit " + limit)
+        helper.log_debug(log_metric + "_okta_caller Iteration Count: " + str(i_count) + " Limit " + str(limit) )
 
         #special case here for 0 and logs
         if 0 == i_count:
