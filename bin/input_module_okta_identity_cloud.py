@@ -267,7 +267,7 @@ def _okta_caller(helper, resource, params, method, limit):
                 helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
                 getPages = False
         else:
-            if  bool(stashNVal):
+            if not bool(stashNVal):
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
             else:
                 helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
