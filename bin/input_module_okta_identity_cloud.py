@@ -327,13 +327,13 @@ def _okta_client(helper, url, params, method):
         return sendBack
     
     if response.status_code == 429:
-        helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : requestid : " + requestid)
+        helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : rid=" + requestid)
         _rateLimitEnforce(helper, r_headers, response.status_code)
         # If we hit a 429 send back the current url as the n_val, we will pick up from there next time.
         sendBack = { 'results': {}, 'n_val': url }
         return sendBack
     
-    helper.log_debug(log_metric + "_okta_client returned response to requestid : " + requestid)
+    helper.log_debug(log_metric + "_okta_client returned response to our request rid=" + requestid)
     #historical_responses = response.history
     # get response status code
     #r_status = response.status_code
