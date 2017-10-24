@@ -281,7 +281,7 @@ def _okta_caller(helper, resource, params, method, limit):
             else:
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
 
-    helper.log_debug("MATT! Returning Results from _okta_caller")
+    helper.log_debug("Returning Results from _okta_caller")
     return results
 
 def _okta_client(helper, url, params, method):
@@ -373,7 +373,7 @@ def _collectUsers(helper):
     cp_prefix = global_account['name']
     resource = "/users"
     method = "Get"
-    opt_limit = int(helper.get_arg('limit'))
+    opt_limit = int(_getSetting(helper,'user_limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'        
     start_date = helper.get_check_point((cp_prefix + "users_lastUpdated"))
@@ -412,7 +412,7 @@ def _collectGroups(helper):
     cp_prefix = global_account['name']    
     resource = "/groups"
     method = "Get"        
-    opt_limit = int(helper.get_arg('limit'))
+    opt_limit = int(_getSetting(helper,'group_limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'
     start_lastUpdated = helper.get_check_point((cp_prefix + "groups_lastUpdated"))
@@ -489,7 +489,10 @@ def _collectGroupUsers(helper, gid):
     helper.log_debug(log_metric + "_collectGroupUsers has been invoked: " + gid )
     resource = "/groups/" + gid + "/skinny_users"
     method = "Get"
-    opt_limit = int(helper.get_arg('limit'))
+    '''
+        concerned that this limit won't be honored in pagination links triggering the bug i fear
+    '''
+    opt_limit = int(_getSetting(helper,'group_limit'))
     params = {'limit': opt_limit}
     groupUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
@@ -505,7 +508,10 @@ def _collectGroupApps(helper, gid):
     helper.log_debug(log_metric + " _collectGroupApps has been invoked for: " + gid )
     resource = "/groups/" + gid + "/apps"
     method = "Get"
-    opt_limit = int(helper.get_arg('limit'))
+    '''
+        concerned that this limit won't be honored in pagination links triggering the bug i fear
+    '''
+    opt_limit = int(_getSetting(helper,'group_limit'))
     params = {'limit': opt_limit}
     groupApps = _okta_caller(helper, resource, params, method, opt_limit)
     
@@ -520,10 +526,9 @@ def _collectApps(helper):
     log_metric = "metric=" + opt_metric + " | message="
     
     helper.log_debug(log_metric + "_collectApps has been invoked")
-    opt_limit = int(helper.get_arg('limit'))
     resource = "/apps"
     method = "Get"
-    opt_limit = int(helper.get_arg('limit'))
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit, 'filter': 'status eq "ACTIVE"'}
     apps = _okta_caller(helper, resource, params, method)
     
@@ -543,7 +548,10 @@ def _collectAppUsers(helper, aid):
     helper.log_debug(log_metric + "_collectAppUsers has been invoked: " + aid )
     resource = "/apps/" + aid + "/skinny_users"
     method = "Get"
-    opt_limit = int(helper.get_arg('limit'))
+    '''
+        fear this limit won't be honored in pagination links triggering an early exit in _okta_caller
+    '''    
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
     appUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
@@ -559,7 +567,10 @@ def _collectAppGroups(helper, aid):
     helper.log_debug(log_metric + "_collectAppGroups has been invoked: " + aid )
     resource = "/apps/" + aid + "/groups"
     method = "Get"
-    opt_limit = int(int(helper.get_arg('limit')))
+    '''
+        fear this limit won't be honored in pagination links triggering an early exit in _okta_caller
+    '''
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
     appGroups = _okta_caller(helper, resource, params, method, opt_limit)
     
