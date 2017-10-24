@@ -729,10 +729,10 @@ def collect_events(helper, ew):
         users = _collectUsers(helper)
         
         if ( len(users) > 0 ):
-            helper.log_debug(log_info + "Writing " + (str(len(users))) + " users to splunk.")
+            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk.")
             _write_oktaResults(helper, ew, users)
         else:
-            helper.log_debug(log_info + "Zero users returned...")
+            helper.log_debug(log_metric + "Zero users returned...")
             
     elif opt_metric == "group":
         helper.log_debug(log_metric + "Invoking a call for groups.")
