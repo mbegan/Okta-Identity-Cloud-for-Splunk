@@ -579,6 +579,7 @@ def _collectLogs(helper):
     resource = "/logs"
     method = "Get"    
     dtnow = datetime.now()
+    opt_limit = int(_getSetting(helper,'log_limit'))
 
     if (_getSetting(helper,'use_now_for_until')):
         until = 'now'
@@ -605,7 +606,6 @@ def _collectLogs(helper):
             This case should be uncommon and would usually be the indication of an error
         '''
         helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
-        opt_limit = int(_getSetting(helper,'log_limit'))
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}
     else:
         '''
@@ -615,7 +615,6 @@ def _collectLogs(helper):
         opt_history = int(_getSetting(helper,'log_history'))
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
-        opt_limit = int(_getSetting(helper,'log_limit'))
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
 
     helper.log_debug("Calling _okta_caller")
