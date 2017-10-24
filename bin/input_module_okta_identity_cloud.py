@@ -630,8 +630,9 @@ def _collectLogs(helper):
     if ( (len(logs)) > 0 ):
         lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
         if (logs[0]['uuid'] == lastUuid):
-            helper.log_debug(log_metric + "_collectLogs removing duplicate entry: " + pop['uuid'])
-            pop = logs.pop(0)    
+            helper.log_debug(log_metric + "_collectLogs removing duplicate log uuid=" + lastUuid)
+            pop = logs.pop(0)
+            helper.log_info(log_metric + "_collectLogs removed duplicate entry: " + pop['uuid'])
         helper.log_debug(log_metric + "_collectLogs checkpoint logs_since: " + logs[-1]['published'] + " and logs_lastUuid: " + logs[-1]['uuid'])
         helper.save_check_point((cp_prefix + "logs_since"), logs[-1]['published'])
         helper.save_check_point((cp_prefix + "logs_lastUuid"), logs[-1]['uuid'])
