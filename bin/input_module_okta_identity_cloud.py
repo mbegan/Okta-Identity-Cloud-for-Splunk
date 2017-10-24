@@ -578,9 +578,6 @@ def _collectLogs(helper):
     method = "Get"    
     dtnow = datetime.now()
 
-    opt_limit = int(_getSetting(helper,'log_limit'))
-    opt_history = int(_getSetting(helper,'log_history'))
-
     if (_getSetting(helper,'use_now_for_until')):
         until = 'now'
     else:
@@ -590,30 +587,42 @@ def _collectLogs(helper):
     n_val = helper.get_check_point((cp_prefix + "logs_n_val"))
     
     if n_val:
-        #We are picking up a stashed next link (meaning we exited a large batch midstream)
-        helper.log_debug(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
+        '''
+            We are picking up a stashed next link, this is the normal operating mode
+            define a blank param obj since the next link contains everythign we need
+        '''
+        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
         resource = n_val
-        #params are all in the next link
         params = {}
-        #delete it so we don't pick it up again
         helper.delete_check_point((cp_prefix + "logs_n_val"))
     elif since:        
-        #Not a cold start, use the checkpoint values for retrieval
-        helper.log_debug(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
+        '''
+            Not a cold start, use the checkpoint values for retrieval, this is a failsafe method
+            This case should be uncommon and would usually be the indication of an error
+        '''
+        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
+        opt_limit = int(_getSetting(helper,'log_limit'))
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}
     else:
-        #this is a cold start, use our config input for since
+        '''
+            this is a cold start, use our config values input for since
+        '''
         helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
+        opt_history = int(_getSetting(helper,'log_history'))
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
+        opt_limit = int(_getSetting(helper,'log_limit'))
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
 
     logs = _okta_caller(helper, resource, params, method, opt_limit)
     
-    # stash the last UUID and a since value as a failsafe.
-    # Also remove dupes potentially triggered in this failsafe mode
-    lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
+    '''
+        Stash the last UUID returned
+        Stash the since value as a failsafe
+        Remove potential dupes that may come from failsafe polling method
+    '''
     if ( (len(logs)) > 0 ):
+        lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
         if (logs[0]['uuid'] == lastUuid):
             helper.log_debug(log_metric + "_collectLogs removing duplicate entry: " + pop['uuid'])
             pop = logs.pop(0)    
@@ -679,7 +688,8 @@ def collect_events(helper, ew):
     helper.save_check_point((cp_prefix + ":" + opt_metric + ":lastRun"), diff)
     
     if opt_metric == "zset":
-        helper.log_debug(log_metric + "Invoking a call to reset checkpoints for logs, users and groups.")
+        helper.log_debug(log_metric + "Invoking a call to reset all of our checkpoints")
+        # can i run a query to find my checkpoints dynamically?
         reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
         reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
         reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
@@ -689,52 +699,44 @@ def collect_events(helper, ew):
         reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
     
     elif opt_metric == "log":
-        '''
-        reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
-        reset = helper.delete_check_point((cp_prefix + "logs_since"))
-        reset = helper.delete_check_point((cp_prefix + "logs_n_val"))
-        '''
-        
         helper.log_debug(log_metric + "Invoking a call for logs.")
         logs = _collectLogs(helper)
         if ( len(logs) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
             _write_oktaResults(helper, ew, logs)
         else:
-            helper.log_debug(log_metric + "Zero logs returned...")
+            helper.log_info(log_metric + "Zero logs returned...")
             
     elif opt_metric == "user":
-        #reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
         helper.log_debug(log_metric + "Invoking a call for users.")
         users = _collectUsers(helper)
         
         if ( len(users) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk.")
+            helper.log_debug(log_info + "Writing " + (str(len(users))) + " users to splunk.")
             _write_oktaResults(helper, ew, users)
         else:
-            helper.log_debug(log_metric + "Zero users returned...")
+            helper.log_debug(log_info + "Zero users returned...")
             
     elif opt_metric == "group":
-        #reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
         helper.log_debug(log_metric + "Invoking a call for groups.")
         groups = _collectGroups(helper)
         
         if ( len(groups) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
             _write_oktaResults(helper, ew, groups)
         else:
-            helper.log_debug(log_metric + "Zero groups returned...")
+            helper.log_info(log_metric + "Zero groups returned...")
             
     elif opt_metric == "app":
         helper.log_debug(log_metric + "Invoking a call for apps.")
         apps = _collectApps(helper)
         
         if ( len(apps) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
             _write_oktaResults(helper, ew, apps)
         else:
-            helper.log_debug(log_metric + "Zero apps returned...")
+            helper.log_info(log_metric + "Zero apps returned...")
             
     else:
         #this is bad
-        return "fail"
+        helper.log_error(log_metric + "Something happened that should never have happend...")
