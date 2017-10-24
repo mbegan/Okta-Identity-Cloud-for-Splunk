@@ -249,7 +249,7 @@ def _okta_caller(helper, resource, params, method, limit):
                 because limit is a retained parameter in our next link...
                 include something in the docs around this
             '''
-            helper.log_debug(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates the next page is empty)
+            helper.log_debug(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates the next page is empty")
             if skipEmptyPages:
                 helper.log_debug(log_metric + "_okta_caller skip empty pages is set to true")
                 getPages = False
