@@ -666,11 +666,11 @@ def collect_events(helper, ew):
     loglevel = helper.get_log_level()
     helper.set_log_level(loglevel)
     
-    limits = { 'log':   {'minTime': 30,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
-               'user':  {'minTime': 3590,  'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 3590,  'minSize':20, 'defSize':200, 'maxSize': 300 },
+    limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
+               'user':  {'minTime': 900,   'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'group': {'minTime': 900,   'minSize':20, 'defSize':200, 'maxSize': 300 },
                'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42, 'maxSize': 42  }, }
+               'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
     #Enforce minTimes at runtime
     lastTs = helper.get_check_point((cp_prefix + ":" + opt_metric + ":lastRun"))
@@ -681,7 +681,7 @@ def collect_events(helper, ew):
     diff = (ts - lastTs)
     
     #Confirm we aren't too frequent
-    if (diff <= limits[opt_metric]['minTime']):
+    if (diff < limits[opt_metric]['minTime']):
         helper.log_error(log_metric + "collect_events Invoked, it has been only been " + str(diff) + " seconds since we last ran, skipping")
         return
     
