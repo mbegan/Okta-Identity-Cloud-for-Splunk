@@ -4,7 +4,7 @@
 		<input type="time" token="mytime">
 			<label>Time Range</label>
 			<default>
-				<earliest>-60m@m</earliest>
+				<earliest>-15m</earliest>
 				<latest>now</latest>
 			</default>
 		</input>
