@@ -281,7 +281,7 @@ def _okta_caller(helper, resource, params, method, limit):
             else:
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
 
-    helper.log_debug("Returning Results from _okta_caller")
+    helper.log_debug("MATT! Returning Results from _okta_caller")
     return results
 
 def _okta_client(helper, url, params, method):
@@ -746,3 +746,4 @@ def collect_events(helper, ew):
     else:
         #this is bad
         helper.log_error(log_metric + "Something happened that should never have happend...")
+
