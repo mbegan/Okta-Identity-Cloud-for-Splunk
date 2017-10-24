@@ -277,9 +277,11 @@ def _okta_caller(helper, resource, params, method, limit):
             if stashNVal.startswith(myValidPattern):
                 helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
                 helper.save_check_point((cp_prefix + "logs_n_val"), stashNVal)                
+                helper.log_debug("n_val stashed")
             else:
                 helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
 
+    helper.log_debug("Returning Results from _okta_caller")
     return results
 
 def _okta_client(helper, url, params, method):
@@ -594,7 +596,9 @@ def _collectLogs(helper):
         helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
         resource = n_val
         params = {}
+        helper.log_debug("deleting checkpoint")
         helper.delete_check_point((cp_prefix + "logs_n_val"))
+        helper.log_debug("checkpoint deleted")
     elif since:        
         '''
             Not a cold start, use the checkpoint values for retrieval, this is a failsafe method
@@ -614,7 +618,9 @@ def _collectLogs(helper):
         opt_limit = int(_getSetting(helper,'log_limit'))
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
 
+    helper.log_debug("Calling _okta_caller")
     logs = _okta_caller(helper, resource, params, method, opt_limit)
+    helper.log_debug("_okta_caller returned")
     
     '''
         Stash the last UUID returned
