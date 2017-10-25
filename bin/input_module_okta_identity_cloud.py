@@ -530,7 +530,7 @@ def _collectApps(helper):
     method = "Get"
     opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit, 'filter': 'status eq "ACTIVE"'}
-    apps = _okta_caller(helper, resource, params, method)
+    apps = _okta_caller(helper, resource, params, method, opt_limit)
     
     for app in apps:
         #assigned_users
