@@ -667,8 +667,8 @@ def collect_events(helper, ew):
     helper.set_log_level(loglevel)
     
     limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
-               'user':  {'minTime': 900,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 900,   'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
                'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
                'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
