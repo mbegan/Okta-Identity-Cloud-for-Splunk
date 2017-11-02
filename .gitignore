@@ -19,6 +19,7 @@
 !static/*
 !README/*
 !README.txt
+!appserver/static/js/build/globalConfig.json
 
 # ...even if they are in subdirectories
 !*/
