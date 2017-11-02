@@ -19,4 +19,5 @@ log_limit =
 log_history = 
 throttle_threshold = 
 http_request_timeout = 
-fetch_empty_pages = 
+skip_empty_pages = 
+use_now_for_until = 

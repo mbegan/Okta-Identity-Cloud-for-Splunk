@@ -173,7 +173,17 @@ fields_additional_parameters = [
         )
     ), 
     field.RestField(
-        'fetch_empty_pages',
+        'skip_empty_pages',
+        required=True,
+        encrypted=False,
+        default='True',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
+    ), 
+    field.RestField(
+        'use_now_for_until',
         required=True,
         encrypted=False,
         default='True',
