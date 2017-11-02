@@ -622,8 +622,8 @@ def _collectLogs(helper):
         '''
             this is a cold start, use our config values input for since
         '''
-        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
         opt_history = int(_getSetting(helper,'log_history'))
+        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
