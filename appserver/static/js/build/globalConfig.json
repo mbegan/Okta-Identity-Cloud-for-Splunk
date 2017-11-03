@@ -177,11 +177,11 @@
                         "header": [
                             {
                                 "field": "name", 
-                                "label": "Account name"
+                                "label": "Okta Account"
                             }, 
                             {
                                 "field": "username", 
-                                "label": "Username"
+                                "label": "Okta Domain"
                             }
                         ], 
                         "actions": [
@@ -215,9 +215,9 @@
                         {
                             "required": true, 
                             "options": {
-                                "placeholder": "Enter the username here"
+                                "placeholder": "Enter the okta domain here (yourdomain.okta.com)"
                             }, 
-                            "help": "Enter the username for this account.", 
+                            "help": "Enter the Okta domain name the account.", 
                             "field": "username", 
                             "validators": [
                                 {
@@ -228,13 +228,13 @@
                                 }
                             ], 
                             "type": "text", 
-                            "label": "Username"
+                            "label": "Okta Org"
                         }, 
                         {
                             "required": true, 
                             "encrypted": true, 
                             "field": "password", 
-                            "help": "Enter the password for this account.", 
+                            "help": "Enter the API Token for this account -- https://developer.okta.com/docs/api/getting_started/getting_a_token.html ", 
                             "validators": [
                                 {
                                     "maxLength": 8192, 
@@ -244,7 +244,7 @@
                                 }
                             ], 
                             "type": "text", 
-                            "label": "Password"
+                            "label": "API Token"
                         }
                     ], 
                     "name": "account"
