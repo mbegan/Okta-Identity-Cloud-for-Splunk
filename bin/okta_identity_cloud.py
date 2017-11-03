@@ -51,7 +51,7 @@ class ModInputokta_identity_cloud(modinput_wrapper.base_modinput.BaseModInput):
                                          required_on_create=True,
                                          required_on_edit=False))
         scheme.add_argument(smi.Argument("global_account", title="Okta Account",
-                                         description="Select the Okta Account from the global account list(username is Okta domain name, password is API Token)See: http://developer.okta.com/docs/api/getting_started/getting_a_token.html",
+                                         description="Select the Okta Account from the list    ( \"Configuration > Account\" to Add )",
                                          required_on_create=True,
                                          required_on_edit=False))
         return scheme
