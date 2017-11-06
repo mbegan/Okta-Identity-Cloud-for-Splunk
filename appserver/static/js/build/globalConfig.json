@@ -1,0 +1,564 @@
+{
+    "pages": {
+        "configuration": {
+            "title": "Configuration", 
+            "description": "Set up your add-on", 
+            "tabs": [
+                {
+                    "title": "Accounts", 
+                    "entity": [
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 50, 
+                                    "type": "string", 
+                                    "errorMsg": "Length of Account name should be between 1 and 50", 
+                                    "minLength": 1
+                                }, 
+                                {
+                                    "type": "regex", 
+                                    "errorMsg": "Account name must start with a letter and followed by alphabetic letters, digits or underscores.", 
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                }
+                            ], 
+                            "help": "Enter a unique name for this account (prod, dev, test)", 
+                            "field": "name", 
+                            "label": "Account Name", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 200, 
+                                    "type": "string", 
+                                    "errorMsg": "Length of username should be between 1 and 200", 
+                                    "minLength": 1
+                                }
+                            ], 
+                            "help": "Enter the domain of your Okta Org", 
+                            "field": "username", 
+                            "label": "Okta Domain", 
+                            "type": "text", 
+                            "required": true, 
+                            "options": {
+                                "placeholder": "Enter the Okta Domain ( yourdomain.okta.com )"
+                            }
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Length of password should be between 1 and 8192", 
+                                    "minLength": 1
+                                }
+                            ], 
+                            "help": "Enter the API Token account (https://developer.okta.com/docs/api/getting_started/getting_a_token.html)", 
+                            "field": "password", 
+                            "label": "API Token", 
+                            "type": "text", 
+                            "required": true, 
+                            "options": {
+                                "placeholder": "https://developer.okta.com/docs/api/getting_started/getting_a_token.html"
+                            },
+                            "encrypted": true
+                        }
+                    ], 
+                    "name": "account", 
+                    "table": {
+                        "actions": [
+                            "edit", 
+                            "delete", 
+                            "clone"
+                        ], 
+                        "header": [
+                            {
+                                "label": "Account name", 
+                                "field": "name"
+                            }, 
+                            {
+                                "label": "Okta Domain", 
+                                "field": "username"
+                            }
+                        ]
+                    }
+                }, 
+                {
+                    "title": "Proxy", 
+                    "entity": [
+                        {
+                            "label": "Enable", 
+                            "type": "checkbox", 
+                            "field": "proxy_enabled"
+                        }, 
+                        {
+                            "label": "Proxy Type", 
+                            "options": {
+                                "disableSearch": true, 
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "http", 
+                                        "value": "http"
+                                    }, 
+                                    {
+                                        "label": "socks4", 
+                                        "value": "socks4"
+                                    }, 
+                                    {
+                                        "label": "socks5", 
+                                        "value": "socks5"
+                                    }
+                                ]
+                            }, 
+                            "type": "singleSelect", 
+                            "defaultValue": "http", 
+                            "field": "proxy_type"
+                        }, 
+                        {
+                            "label": "Host", 
+                            "validators": [
+                                {
+                                    "maxLength": 4096, 
+                                    "type": "string", 
+                                    "errorMsg": "Max host length is 4096", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "type": "text", 
+                            "field": "proxy_url"
+                        }, 
+                        {
+                            "label": "Port", 
+                            "validators": [
+                                {
+                                    "type": "number", 
+                                    "range": [
+                                        1, 
+                                        65535
+                                    ]
+                                }
+                            ], 
+                            "type": "text", 
+                            "field": "proxy_port"
+                        }, 
+                        {
+                            "label": "Username", 
+                            "validators": [
+                                {
+                                    "maxLength": 50, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of username is 50", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "type": "text", 
+                            "field": "proxy_username"
+                        }, 
+                        {
+                            "label": "Password", 
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of password is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "type": "text", 
+                            "encrypted": true, 
+                            "field": "proxy_password"
+                        }, 
+                        {
+                            "label": "Remote DNS resolution", 
+                            "type": "checkbox", 
+                            "field": "proxy_rdns"
+                        }
+                    ], 
+                    "name": "proxy", 
+                    "options": {
+                        "saveValidator": "function(formData) { if(!formData.proxy_enabled || formData.proxy_enabled === '0') {return true; } if(!formData.proxy_url) { return 'Proxy Host can not be empty'; } if(!formData.proxy_port) { return 'Proxy Port can not be empty'; } return true; }"
+                    }
+                }, 
+                {
+                    "title": "Logging", 
+                    "entity": [
+                        {
+                            "label": "Log level", 
+                            "options": {
+                                "disableSearch": true, 
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "DEBUG", 
+                                        "value": "DEBUG"
+                                    }, 
+                                    {
+                                        "label": "INFO", 
+                                        "value": "INFO"
+                                    }, 
+                                    {
+                                        "label": "WARNING", 
+                                        "value": "WARNING"
+                                    }, 
+                                    {
+                                        "label": "ERROR", 
+                                        "value": "ERROR"
+                                    }, 
+                                    {
+                                        "label": "CRITICAL", 
+                                        "value": "CRITICAL"
+                                    }
+                                ]
+                            }, 
+                            "type": "singleSelect", 
+                            "defaultValue": "INFO", 
+                            "field": "loglevel"
+                        }
+                    ], 
+                    "name": "logging"
+                }, 
+                {
+                    "title": "Add-on Settings", 
+                    "entity": [
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Max batch size, used to protect from memory exhaustion on your splunk server.  6000 is default and recommended.", 
+                            "defaultValue": "6000", 
+                            "field": "max_log_batch", 
+                            "label": "Maximum log batch size", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "defaultValue": "200", 
+                            "field": "user_limit", 
+                            "label": "User Limit", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "defaultValue": "200", 
+                            "field": "group_limit", 
+                            "label": "Group Limit", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "defaultValue": "200", 
+                            "field": "app_limit", 
+                            "label": "App Limit", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "defaultValue": "100", 
+                            "field": "log_limit", 
+                            "label": "Log Limit", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "number of days in the past to collect. Max 90 Default 7 \n (history is only relevant with logs)", 
+                            "defaultValue": "7", 
+                            "field": "log_history", 
+                            "label": "Log History", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "below this percentage of available rate limits an adaptive throttling strategy is leveraged", 
+                            "defaultValue": "20", 
+                            "field": "throttle_threshold", 
+                            "label": "Throttling Threshold Pct", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "time (in seconds) for http request to wait for Okta to respond.  Valid range 30-300, Default 90", 
+                            "defaultValue": "90", 
+                            "field": "http_request_timeout", 
+                            "label": "HTTP Request Timeout", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Defaults to True, only change if specifically advised by Okta to change.", 
+                            "defaultValue": "True", 
+                            "field": "skip_empty_pages", 
+                            "label": "Skip Empty Pages", 
+                            "type": "text", 
+                            "required": true, 
+                            "options": {
+                                "placeholder": "True"
+                            }
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 8192, 
+                                    "type": "string", 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "minLength": 0
+                                }
+                            ], 
+                            "help": "Changes the logic used to collect logs, only change if specifically advised by Okta to change", 
+                            "defaultValue": "True", 
+                            "field": "use_now_for_until", 
+                            "label": "Use \"now\" for log polling", 
+                            "type": "text", 
+                            "required": true, 
+                            "options": {
+                                "placeholder": "True"
+                            }
+                        }
+                    ], 
+                    "name": "additional_parameters"
+                }
+            ]
+        }, 
+        "inputs": {
+            "title": "Inputs", 
+            "description": "Manage your data inputs", 
+            "table": {
+                "actions": [
+                    "edit", 
+                    "enable", 
+                    "delete", 
+                    "clone"
+                ], 
+                "moreInfo": [
+                    {
+                        "label": "Name", 
+                        "field": "name"
+                    }, 
+                    {
+                        "label": "Interval", 
+                        "field": "interval"
+                    }, 
+                    {
+                        "label": "Index", 
+                        "field": "index"
+                    }, 
+                    {
+                        "label": "Status", 
+                        "field": "disabled"
+                    }, 
+                    {
+                        "label": "Metric", 
+                        "field": "metric"
+                    }, 
+                    {
+                        "label": "Okta Account", 
+                        "field": "global_account"
+                    }
+                ], 
+                "header": [
+                    {
+                        "label": "Name", 
+                        "field": "name"
+                    }, 
+                    {
+                        "label": "Interval", 
+                        "field": "interval"
+                    }, 
+                    {
+                        "label": "Index", 
+                        "field": "index"
+                    }, 
+                    {
+                        "label": "Status", 
+                        "field": "disabled"
+                    }
+                ]
+            }, 
+            "services": [
+                {
+                    "title": "Okta Identity Cloud", 
+                    "entity": [
+                        {
+                            "validators": [
+                                {
+                                    "type": "regex", 
+                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores.", 
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                }, 
+                                {
+                                    "maxLength": 100, 
+                                    "type": "string", 
+                                    "errorMsg": "Length of input name should be between 1 and 100", 
+                                    "minLength": 1
+                                }
+                            ], 
+                            "help": "Enter a unique name for the data input", 
+                            "field": "name", 
+                            "label": "Name", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "type": "regex", 
+                                    "errorMsg": "Interval must be an integer.", 
+                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$"
+                                }
+                            ], 
+                            "help": "Time interval of input in seconds.", 
+                            "field": "interval", 
+                            "label": "Interval", 
+                            "type": "text", 
+                            "required": true
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "maxLength": 80, 
+                                    "type": "string", 
+                                    "errorMsg": "Length of index name should be between 1 and 80.", 
+                                    "minLength": 1
+                                }
+                            ], 
+                            "options": {
+                                "endpointUrl": "data/indexes", 
+                                "createSearchChoice": true, 
+                                "blackList": "^_.*$"
+                            }, 
+                            "defaultValue": "default", 
+                            "field": "index", 
+                            "label": "Index", 
+                            "type": "singleSelect", 
+                            "required": true
+                        }, 
+                        {
+                            "help": "The metric (data type) you wish to collect", 
+                            "field": "metric", 
+                            "label": "Metric", 
+                            "type": "singleSelect", 
+                            "required": true, 
+                            "options": {
+                                "disableSearch": true, 
+                                "placeholder": "The okta data type to collect", 
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "Logs", 
+                                        "value": "log"
+                                    }, 
+                                    {
+                                        "label": "Users", 
+                                        "value": "user"
+                                    }, 
+                                    {
+                                        "label": "Groups", 
+                                        "value": "group"
+                                    }, 
+                                    {
+                                        "label": "Apps", 
+                                        "value": "app"
+                                    }, 
+                                    {
+                                        "label": "Reset", 
+                                        "value": "zset"
+                                    }
+                                ]
+                            }
+                        }, 
+                        {
+                            "help": "Select the Okta Account from the list    ( \"Configuration > Account\" to Add )", 
+                            "field": "global_account", 
+                            "label": "Okta Account", 
+                            "type": "singleSelect", 
+                            "required": true, 
+                            "options": {
+                                "referenceName": "account", 
+                                "placeholder": "Choose one"
+                            }
+                        }
+                    ], 
+                    "name": "okta_identity_cloud"
+                }
+            ]
+        }
+    }, 
+    "meta": {
+        "apiVersion": "3.0.0", 
+        "name": "TA-Okta_Identity_Cloud_for_Splunk", 
+        "displayName": "Okta Identity Cloud Add-on for Splunk", 
+        "version": "2.23", 
+        "restRoot": "TA_Okta_Identity_Cloud_for_Splunk"
+    }
+}

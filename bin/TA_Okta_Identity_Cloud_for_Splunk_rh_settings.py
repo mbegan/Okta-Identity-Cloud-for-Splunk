@@ -161,6 +161,36 @@ fields_additional_parameters = [
             min_len=0, 
             max_len=8192, 
         )
+    ), 
+    field.RestField(
+        'http_request_timeout',
+        required=True,
+        encrypted=False,
+        default='90',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
+    ), 
+    field.RestField(
+        'skip_empty_pages',
+        required=True,
+        encrypted=False,
+        default='True',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
+    ), 
+    field.RestField(
+        'use_now_for_until',
+        required=True,
+        encrypted=False,
+        default='True',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')

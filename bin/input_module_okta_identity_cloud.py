@@ -40,7 +40,7 @@ def _rateLimitEnforce(helper, headers, rc):
     try:
         myReset = int(headers['X-Rate-Limit-Reset'])
         myRemaining = float(headers['X-Rate-Limit-Remaining'])
-        myLimit = float(headers['X-Rate-Limit-Limit'])        
+        myLimit = float(headers['X-Rate-Limit-Limit'])
         mySecLeft = int(myReset - myTimeStamp)
         myPctLeft = float(100 * myRemaining / myLimit)
     except KeyError:
@@ -48,7 +48,7 @@ def _rateLimitEnforce(helper, headers, rc):
         myRemaining = int(100)
         mySecLeft = int(60)
         myPctLeft = float(50.0)
-    
+
     helper.log_debug(log_metric + "_rateLimitEnforce Invoked. There are " + str(mySecLeft) + " seconds left in the window and we have " + str(myPctLeft) + " percent of the limit available.  The response code returned was " + str(rc) )
     if rc == 429:
         #the rate limit is exhausted, sleep
@@ -60,26 +60,27 @@ def _rateLimitEnforce(helper, headers, rc):
         # how many calls per second do we assume are happening
         cps=4
         # percentage to start throttling at
-        
+
         try:
-            throttle = float(helper.get_global_setting('throttle_threshold'))
+            throttle = _getSetting(helper,'throttle_threshold')
+            throttle = float(throttle)
         except:
-            throttle=20.0
-        
+            throttle=float(20.0)
+
         #divide by zero is no good
         if myRemaining == 0:
             myRemaining = 1
-        
+
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
             sleepTime = mySecLeft * cps / myRemaining
         else:
             sleepTime = mySecLeft * cps / myRemaining / 100
-            
+ 
         #never sleep much longer than reset time, saftey factor of 7 seconds
         if sleepTime > (mySecLeft + 7):
             sleepTime = mySecLeft + 7
-        
+
         if myPctLeft < throttle:
             helper.log_warning(log_metric + "_rateLimitEnforce is now pausing operations for " + str(sleepTime) + " to avoid exhausting the rate limit" )
             time.sleep(sleepTime)
@@ -94,6 +95,45 @@ def _rateLimitEnforce(helper, headers, rc):
     else:
         helper.log_error(log_metric + "_rateLimitEnforce is going to pause for 1 second now as an unknown error was indicated (not an http response code)" )
         time.sleep(1)
+
+def _getSetting(helper, setting):
+    opt_metric = helper.get_arg('metric')
+    log_metric = "metric=" + opt_metric + " | message="
+    helper.log_debug(log_metric + "_getSetting Invoked")
+    myDefaults = {
+        'max_log_batch': 6000,
+        'user_limit': 200,
+        'group_limit': 200,
+        'app_limit': 200,
+        'log_limit': 100,
+        'log_history': 7,
+        'throttle_threshold': 25.0,
+        'http_request_timeout': 90,
+        'fetch_empty_pages': False,
+        'use_now_for_until': True,
+        'skip_empty_pages': True
+    }
+
+    # early fail if the setting we've been asked for isn't something we know about
+    if setting not in myDefaults:
+        helper.log_error(log_metric + "_getSetting has no way of finding values for: " + str(setting))
+        return None
+    else:
+        helper.log_info(log_metric + "_getSetting is looking for values for: " + str(setting))
+
+    try:
+        myVal = helper.get_global_setting(setting)
+        helper.log_debug(log_metric + "_getSetting has a defined " + setting + " value of: " + str(myVal))
+    except:
+        myVal = myDefaults[setting]
+        helper.log_debug(log_metric + "_getSetting has a default1 " + setting + " value of: " + str(myVal))
+    
+    #test for nonetype
+    if myVal is None:
+        myVal = myDefaults[setting]
+        helper.log_debug(log_metric + "_getSetting has a default2 " + setting + " value of: " + str(myVal))
+
+    return myVal
 
 def _write_oktaResults(helper, ew, results):
     global_account = helper.get_arg('global_account')
@@ -139,50 +179,109 @@ def _write_oktaResults(helper, ew, results):
         )
         ew.write_event(event)
 
-def _okta_caller(helper, resource, params, method):
+def _okta_caller(helper, resource, params, method, limit):
     #this calls the _okta_client with baked URL's
     #makes pagination calls
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_caller Invoked")
-    
+
     global_account = helper.get_arg('global_account')
-    cp_prefix = global_account['name']    
+    cp_prefix = global_account['name']
     okta_org = global_account['username']
     myValidPattern = ("https://" + okta_org + "/api/")
+    #settings
+    try:
+        max_log_batch = int(_getSetting(helper,'max_log_batch'))
+    except:
+        max_log_batch = int(6000)
     
-    #if I get a full URL as resource use it
+    try:
+        skipEmptyPages = bool(_getSetting(helper,'skip_empty_pages'))
+    except:
+        skipEmptyPages = bool(True)
+
+    #if I get a full URL as resource use it, this will happne if we are picking up from a previous page
     if resource.startswith(myValidPattern):
         url = resource
     else:
         url = "https://" + okta_org + "/api/v1" + resource
-        
+    
+    #make a first call
     response = _okta_client(helper, url, params, method)
-    n_val = str(response.pop('n_val', 'None'))
-    results = response.pop('results', {})
     
-    '''
-        if logs stash the results after max_log_batch is hit to avoid memory exhastion on collector
-        For other endpoints page and return when complete... (no good way to page and continue)
-    '''
-    try:
-        max_log_batch = int(helper.get_global_setting('max_log_batch'))
-    except:
-        max_log_batch = 6000
-    
-    myCon = True
-    while ((n_val.startswith(myValidPattern)) and (myCon)):
-        helper.log_debug(log_metric + "_okta_caller fetching next page: " + n_val)
-        response = _okta_client(helper, n_val, {}, method)
-        n_val = str(response['n_val'])
-        results += response['results']
+    results = list()
+    getPages = True
+    stashNVal = str()
+    #determine if and what the next pages is and retrieve as required
+    while(getPages):
+        n_val = str(response.pop('n_val', False))
+        i_results = response.pop('results', {})
+        i_count = int(len(i_results))
+        results += i_results
         r_count = int(len(results))
-        helper.log_debug(log_metric + "_okta_caller has returned " + (str(r_count)) + " results so far, fetching next page: " + n_val)
-        if ( (opt_metric == "log") and ( r_count >= max_log_batch) ): 
-            helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, stashing returned results and n_val of " + n_val)
-            helper.save_check_point((cp_prefix + "logs_n_val"), n_val)
-            myCon = False
-        
+        helper.log_debug(log_metric + "_okta_caller returned: " + str(i_count) + " this pass and: " + str(r_count) + " results so far")
+        helper.log_debug(log_metric + "_okta_caller Iteration Count: " + str(i_count) + " Limit " + str(limit) )
+
+        #special case here for 0 and logs
+        if 0 == i_count:
+            helper.log_debug(log_metric + "_okta_caller we have 0 results returned, determining what to store for next run..." )
+            getPages = False
+            if "log" == opt_metric:
+                if n_val.startswith(myValidPattern):
+                    '''
+                        429 case, penalty has been paid already but lets bail anyhow and pickup on next iteration
+                        We will also encounter this case if/when the logs API ALWAYS returns a next link
+                    '''
+                    helper.log_info(log_metric + "_okta_caller n_val matches our valid pattern with 0 results, store the return n_val: " + n_val)
+                    stashNVal = n_val                    
+                else:
+                    '''
+                        The current functionality of the logs API will not return a next link if the request produced 0 results
+                        in these cases we are going to keep asking for this same page until new logs are produced and we get a new cursor
+                    '''
+                    helper.log_info(log_metric + "_okta_caller n_val does not match our valid pattern with 0 results, store the current URL: " + url )
+                    stashNVal = url
+        elif i_count < limit:
+            '''
+                potential hitch here: If a limit value is raised after initial collection has begun 
+                the number of results in each page will always be lower than our currently defined limit
+                because limit is a retained parameter in our next link...
+                include something in the docs around this
+            '''
+            helper.log_debug(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates the next page is empty")
+            if skipEmptyPages:
+                helper.log_debug(log_metric + "_okta_caller skip empty pages is set to true")
+                getPages = False
+                if "log" == opt_metric:
+                    helper.log_info(log_metric + "_okta_caller is will save the returned logs and store the n_val: " + n_val)
+                    stashNVal = n_val
+        if ( ("log" == opt_metric) and (r_count >= max_log_batch) ):
+            '''
+                To avoid exhausing the Splunk server we are going to end this thread after we hit our max batch size
+                We will pick up on the next interval where we left off
+            '''
+            getPages = False
+            helper.log_info(log_metric + "_okta_caller exceeded the max batch size for logs, saving returned logs and storing n_val: " + n_val)
+            stashNVal = n_val
+
+        if getPages:
+            if n_val.startswith(myValidPattern):
+                helper.log_info(log_metric + "_okta_caller we will be getting the next page: " + n_val)
+                url = n_val
+                response = _okta_client(helper, url, {}, method)
+            else:
+                helper.log_warning(log_metric + "_okta_caller n_val didn't match my pattern check: " + n_val)
+                getPages = False
+        elif "log" == opt_metric:
+            if stashNVal.startswith(myValidPattern):
+                helper.log_info(log_metric + "_okta_caller we will now stash n_val with: " + str(stashNVal) )
+                helper.save_check_point((cp_prefix + "logs_n_val"), stashNVal)                
+                helper.log_debug("n_val stashed")
+            else:
+                helper.log_warning(log_metric + "_okta_caller next link value was noneType " + str(stashNVal) )
+
+    helper.log_debug("Returning Results from _okta_caller")
     return results
 
 def _okta_client(helper, url, params, method):
@@ -193,50 +292,57 @@ def _okta_client(helper, url, params, method):
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
     userAgent = "Splunk-AddOn/2.0b"
     global_account = helper.get_arg('global_account')
-    okta_token = global_account['password']    
+    okta_token = global_account['password']
     
-    headers = { 'Authorization': 'SSWS ' + okta_token, 
-                'User-Agent': userAgent, 
-                'Content-Type': 'application/json', 
+    try:
+        reqTimeout = float(_getSetting(helper,'http_request_timeout'))
+    except:
+        helper.log_debug(log_metric + "_okta_client using coded timeout value")
+        reqTimeout = float(90)
+
+    headers = { 'Authorization': 'SSWS ' + okta_token,
+                'User-Agent': userAgent,
+                'Content-Type': 'application/json',
                 'accept': 'application/json' }
-                
+
     if ServerInfo.is_cloud_instance:
         helper.log_debug("This is a cloud instance, disable use of proxy")
         response = helper.send_http_request \
            (
-               url, method, parameters=params, 
+               url, method, parameters=params,
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
-               timeout=90, use_proxy=False
+               timeout=reqTimeout, use_proxy=False
             )
     else:
         helper.log_debug("This is NOT cloud instance, allow use of proxy if configured")
         response = helper.send_http_request \
            (
-               url, method, parameters=params, 
+               url, method, parameters=params,
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
-               timeout=90
+               timeout=reqTimeout
             )
 
     # get the response headers
     r_headers = response.headers
     requestid = r_headers.pop('X-Okta-Request-Id','None')
-    
+
     #try catch except
     try:
         results = response.json()
     except:
-        sendBack = { 'results': {}, 'n_val': 0 }
+        sendBack = { 'results': {}, 'n_val': False }
         return sendBack
     
     if response.status_code == 429:
-        helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : requestid : " + requestid)
+        helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : rid=" + requestid)
         _rateLimitEnforce(helper, r_headers, response.status_code)
-        sendBack = { 'results': {}, 'n_val': 0 }
+        # If we hit a 429 send back the current url as the n_val, we will pick up from there next time.
+        sendBack = { 'results': {}, 'n_val': url }
         return sendBack
     
-    helper.log_debug(log_metric + "_okta_client returned response to requestid : " + requestid)
+    helper.log_debug(log_metric + "_okta_client returned response to our request rid=" + requestid)
     #historical_responses = response.history
     # get response status code
     #r_status = response.status_code
@@ -252,9 +358,9 @@ def _okta_client(helper, url, params, method):
     helper.log_debug(log_metric + " _okta_client Returned: " + count + " records")
     if 'next' in response.links:
         n_val = response.links['next']['url']
-        helper.log_debug(log_metric + "_okta_client sees another page at this URL: " + n_val )
+        helper.log_info(log_metric + "_okta_client sees another page at this URL: " + n_val )
     else:
-        n_val = 0
+        n_val = False
         
     sendBack = { 'results': results, 'n_val': n_val }
     return sendBack
@@ -267,7 +373,7 @@ def _collectUsers(helper):
     cp_prefix = global_account['name']
     resource = "/users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(_getSetting(helper,'user_limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'        
     start_date = helper.get_check_point((cp_prefix + "users_lastUpdated"))
@@ -278,7 +384,7 @@ def _collectUsers(helper):
 
     myfilter = 'lastUpdated gt "' + start_date + '" and lastUpdated lt "' + end_date + '"'
     params = {'filter': myfilter, 'limit': opt_limit}
-    users = _okta_caller(helper, resource, params, method)
+    users = _okta_caller(helper, resource, params, method, opt_limit)
 
     if ( len(users) > 0 ):
         lastUpdated = _fromIso8601ToUnix(users[-1]['lastUpdated'])
@@ -306,7 +412,7 @@ def _collectGroups(helper):
     cp_prefix = global_account['name']    
     resource = "/groups"
     method = "Get"        
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(_getSetting(helper,'group_limit'))
     dtnow = datetime.now()
     end_date = dtnow.isoformat()[:-3] + 'Z'
     start_lastUpdated = helper.get_check_point((cp_prefix + "groups_lastUpdated"))
@@ -324,7 +430,7 @@ def _collectGroups(helper):
      " and " + end_date + " or membershipUpdated between " + start_lastMembershipUpdated + " and " + end_date)
     myfilter = "( " + lastUpdated + " or " + lastMembershipUpdated + " )"
     params = {'filter': myfilter, 'limit': opt_limit, 'expand': 'stats,app'}
-    groups = _okta_caller(helper, resource, params, method)
+    groups = _okta_caller(helper, resource, params, method, opt_limit)
         
     if ( len(groups) > 0 ):
         lastUpdated = _fromIso8601ToUnix(start_lastUpdated)
@@ -383,9 +489,12 @@ def _collectGroupUsers(helper, gid):
     helper.log_debug(log_metric + "_collectGroupUsers has been invoked: " + gid )
     resource = "/groups/" + gid + "/skinny_users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    '''
+        concerned that this limit won't be honored in pagination links triggering the bug i fear
+    '''
+    opt_limit = int(_getSetting(helper,'group_limit'))
     params = {'limit': opt_limit}
-    groupUsers = _okta_caller(helper, resource, params, method)
+    groupUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
     members = []
     for groupUser in groupUsers:
@@ -399,9 +508,12 @@ def _collectGroupApps(helper, gid):
     helper.log_debug(log_metric + " _collectGroupApps has been invoked for: " + gid )
     resource = "/groups/" + gid + "/apps"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    '''
+        concerned that this limit won't be honored in pagination links triggering the bug i fear
+    '''
+    opt_limit = int(_getSetting(helper,'group_limit'))
     params = {'limit': opt_limit}
-    groupApps = _okta_caller(helper, resource, params, method)
+    groupApps = _okta_caller(helper, resource, params, method, opt_limit)
     
     assignedApps = []
     for groupApp in groupApps:
@@ -414,12 +526,11 @@ def _collectApps(helper):
     log_metric = "metric=" + opt_metric + " | message="
     
     helper.log_debug(log_metric + "_collectApps has been invoked")
-    opt_limit = helper.get_arg('limit')
     resource = "/apps"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit, 'filter': 'status eq "ACTIVE"'}
-    apps = _okta_caller(helper, resource, params, method)
+    apps = _okta_caller(helper, resource, params, method, opt_limit)
     
     for app in apps:
         #assigned_users
@@ -437,9 +548,12 @@ def _collectAppUsers(helper, aid):
     helper.log_debug(log_metric + "_collectAppUsers has been invoked: " + aid )
     resource = "/apps/" + aid + "/skinny_users"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    '''
+        fear this limit won't be honored in pagination links triggering an early exit in _okta_caller
+    '''    
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
-    appUsers = _okta_caller(helper, resource, params, method)
+    appUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
     assigned_users = []
     for appUser in appUsers:
@@ -453,9 +567,12 @@ def _collectAppGroups(helper, aid):
     helper.log_debug(log_metric + "_collectAppGroups has been invoked: " + aid )
     resource = "/apps/" + aid + "/groups"
     method = "Get"
-    opt_limit = helper.get_arg('limit')
+    '''
+        fear this limit won't be honored in pagination links triggering an early exit in _okta_caller
+    '''
+    opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
-    appGroups = _okta_caller(helper, resource, params, method)
+    appGroups = _okta_caller(helper, resource, params, method, opt_limit)
     
     assigned_groups = []
     for appGroup in appGroups:
@@ -468,55 +585,64 @@ def _collectLogs(helper):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_collectLogs Invoked")
-    helper.log_debug("I'm on the Development Branch!!!")
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']
     resource = "/logs"
     method = "Get"    
     dtnow = datetime.now()
-    
-    try:
-        opt_limit = int(helper.get_global_setting('log_limit'))
-    except:
-        opt_limit = 100
+    opt_limit = int(_getSetting(helper,'log_limit'))
 
-    try:
-        opt_history = int(helper.get_global_setting('log_history'))
-    except:
-        opt_history = 7
-    
-    until = dtnow.isoformat()[:-3] + 'Z'
+    if (_getSetting(helper,'use_now_for_until')):
+        until = 'now'
+    else:
+        until = dtnow.isoformat()[:-3] + 'Z'
+
     since = helper.get_check_point((cp_prefix + "logs_since"))
     n_val = helper.get_check_point((cp_prefix + "logs_n_val"))
     
     if n_val:
-        #We are picking up a stashed next link (meaning we exited a large batch midstream)
-        helper.log_debug(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
+        '''
+            We are picking up a stashed next link, this is the normal operating mode
+            define a blank param obj since the next link contains everythign we need
+        '''
+        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
         resource = n_val
-        #params are all in the next link
         params = {}
-        #delete it so we don't pick it up again
+        helper.log_debug("deleting checkpoint")
         helper.delete_check_point((cp_prefix + "logs_n_val"))
+        helper.log_debug("checkpoint deleted")
     elif since:        
-        #Not a cold start, use the checkpoint values for retrieval
-        helper.log_debug(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
+        '''
+            Not a cold start, use the checkpoint values for retrieval, this is a failsafe method
+            This case should be uncommon and would usually be the indication of an error
+        '''
+        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}
     else:
-        #this is a cold start, use our config input for since
+        '''
+            this is a cold start, use our config values input for since
+        '''
+        opt_history = int(_getSetting(helper,'log_history'))
         helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
 
-    logs = _okta_caller(helper, resource, params, method)
+    helper.log_debug("Calling _okta_caller")
+    logs = _okta_caller(helper, resource, params, method, opt_limit)
+    helper.log_debug("_okta_caller returned")
     
-    lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
-    if ((len(logs)) > 0):
-        if (logs[0]['uuid'] == lastUuid):
-            pop = logs.pop(0)
-            helper.log_debug(log_metric + "_collectLogs removing duplicate entry: " + pop['uuid'])
-    
+    '''
+        Stash the last UUID returned
+        Stash the since value as a failsafe
+        Remove potential dupes that may come from failsafe polling method
+    '''
     if ( (len(logs)) > 0 ):
+        lastUuid = helper.get_check_point((cp_prefix + "logs_lastUuid"))
+        if (logs[0]['uuid'] == lastUuid):
+            helper.log_debug(log_metric + "_collectLogs removing duplicate log uuid=" + lastUuid)
+            pop = logs.pop(0)
+            helper.log_info(log_metric + "_collectLogs removed duplicate entry: " + pop['uuid'])
         helper.log_debug(log_metric + "_collectLogs checkpoint logs_since: " + logs[-1]['published'] + " and logs_lastUuid: " + logs[-1]['uuid'])
         helper.save_check_point((cp_prefix + "logs_since"), logs[-1]['published'])
         helper.save_check_point((cp_prefix + "logs_lastUuid"), logs[-1]['uuid'])
@@ -540,11 +666,11 @@ def collect_events(helper, ew):
     loglevel = helper.get_log_level()
     helper.set_log_level(loglevel)
     
-    limits = { 'log':   {'minTime': 30,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
-               'user':  {'minTime': 3590,  'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 3590,  'minSize':20, 'defSize':200, 'maxSize': 300 },
+    limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
+               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
                'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42, 'maxSize': 42  }, }
+               'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
     #Enforce minTimes at runtime
     lastTs = helper.get_check_point((cp_prefix + ":" + opt_metric + ":lastRun"))
@@ -555,15 +681,17 @@ def collect_events(helper, ew):
     diff = (ts - lastTs)
     
     #Confirm we aren't too frequent
-    if (diff <= limits[opt_metric]['minTime']):
+    if (diff < limits[opt_metric]['minTime']):
         helper.log_error(log_metric + "collect_events Invoked, it has been only been " + str(diff) + " seconds since we last ran, skipping")
         return
     
     #Confirm are values are within an acceptable range
 
     try:
+        #limVar becomes log_limit, user_limit etc
         limVar = opt_metric + '_limit'
-        opt_limit = int(helper.get_global_setting( limVar ))
+        opt_limit = _getSetting(helper, limVar )
+        opt_limit = int(opt_limit)
     except:
         opt_limit = limits[opt_metric]['defSize']
         
@@ -577,7 +705,8 @@ def collect_events(helper, ew):
     helper.save_check_point((cp_prefix + ":" + opt_metric + ":lastRun"), diff)
     
     if opt_metric == "zset":
-        helper.log_debug(log_metric + "Invoking a call to reset checkpoints for logs, users and groups.")
+        helper.log_debug(log_metric + "Invoking a call to reset all of our checkpoints")
+        # can i run a query to find my checkpoints dynamically?
         reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
         reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
         reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
@@ -587,22 +716,15 @@ def collect_events(helper, ew):
         reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
     
     elif opt_metric == "log":
-        '''
-        reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
-        reset = helper.delete_check_point((cp_prefix + "logs_since"))
-        reset = helper.delete_check_point((cp_prefix + "logs_n_val"))
-        '''
-        
         helper.log_debug(log_metric + "Invoking a call for logs.")
         logs = _collectLogs(helper)
         if ( len(logs) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
             _write_oktaResults(helper, ew, logs)
         else:
-            helper.log_debug(log_metric + "Zero logs returned...")
+            helper.log_info(log_metric + "Zero logs returned...")
             
     elif opt_metric == "user":
-        #reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
         helper.log_debug(log_metric + "Invoking a call for users.")
         users = _collectUsers(helper)
         
@@ -613,26 +735,26 @@ def collect_events(helper, ew):
             helper.log_debug(log_metric + "Zero users returned...")
             
     elif opt_metric == "group":
-        #reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
         helper.log_debug(log_metric + "Invoking a call for groups.")
         groups = _collectGroups(helper)
         
         if ( len(groups) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
             _write_oktaResults(helper, ew, groups)
         else:
-            helper.log_debug(log_metric + "Zero groups returned...")
+            helper.log_info(log_metric + "Zero groups returned...")
             
     elif opt_metric == "app":
         helper.log_debug(log_metric + "Invoking a call for apps.")
         apps = _collectApps(helper)
         
         if ( len(apps) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
             _write_oktaResults(helper, ew, apps)
         else:
-            helper.log_debug(log_metric + "Zero apps returned...")
+            helper.log_info(log_metric + "Zero apps returned...")
             
     else:
         #this is bad
-        return "fail"
+        helper.log_error(log_metric + "Something happened that should never have happend...")
+

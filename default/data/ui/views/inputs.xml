@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="TA-Okta_Identity_Cloud_for_Splunk:templates/base.html" type="html" isDashboard="False">
+    <label>Inputs</label>
+</view>
