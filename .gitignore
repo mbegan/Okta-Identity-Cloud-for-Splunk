@@ -17,6 +17,7 @@
 !default/**
 !metadata/default.meta
 !static/*
+!lookups/*
 !README/*
 !README.txt
 !appserver/static/js/build/globalConfig.json
