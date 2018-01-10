@@ -413,8 +413,7 @@ def _collectGroups(helper):
     resource = "/groups"
     method = "Get"        
     opt_limit = int(_getSetting(helper,'group_limit'))
-    dtnow = datetime.now()
-    end_date = dtnow.isoformat()[:-3] + 'Z'
+
     start_lastUpdated = helper.get_check_point((cp_prefix + "groups_lastUpdated"))
     if ( (str(start_lastUpdated)) == "None" ):
         start_lastUpdated = "1970-01-01T00:00:00.000Z"
@@ -423,11 +422,12 @@ def _collectGroups(helper):
     if ( (str(start_lastMembershipUpdated)) == "None" ):
         start_lastMembershipUpdated = "1970-01-01T00:00:00.000Z"        
     
-    lastUpdated = '( (lastUpdated gt "' + start_lastUpdated + '") and (lastUpdated lt "' + end_date + '") )'
-    lastMembershipUpdated = '( (lastMembershipUpdated gt "' + start_lastMembershipUpdated + '") and (lastMembershipUpdated lt "' + end_date + '") )'
+    lastUpdated = '(lastUpdated gt "' + start_lastUpdated + '")'
+    lastMembershipUpdated = '(lastMembershipUpdated gt "' + start_lastMembershipUpdated + '")'
     
-    helper.log_debug(log_metric + " _collectGroups Invoked, searching for groups lastUpdated between " + start_lastUpdated + 
-     " and " + end_date + " or membershipUpdated between " + start_lastMembershipUpdated + " and " + end_date)
+    helper.log_debug(log_metric + " _collectGroups Invoked, searching for groups lastUpdated after " + start_lastUpdated + 
+     " or membershipUpdated after " + start_lastMembershipUpdated)
+
     myfilter = "( " + lastUpdated + " or " + lastMembershipUpdated + " )"
     params = {'filter': myfilter, 'limit': opt_limit, 'expand': 'stats,app'}
     groups = _okta_caller(helper, resource, params, method, opt_limit)
