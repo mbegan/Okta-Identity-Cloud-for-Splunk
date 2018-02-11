@@ -110,7 +110,6 @@ def _getSetting(helper, setting):
         'throttle_threshold': 25.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
-        'use_now_for_until': True,
         'skip_empty_pages': True
     }
 
@@ -592,11 +591,6 @@ def _collectLogs(helper):
     dtnow = datetime.now()
     opt_limit = int(_getSetting(helper,'log_limit'))
 
-    if (_getSetting(helper,'use_now_for_until')):
-        until = 'now'
-    else:
-        until = dtnow.isoformat()[:-3] + 'Z'
-
     since = helper.get_check_point((cp_prefix + "logs_since"))
     n_val = helper.get_check_point((cp_prefix + "logs_n_val"))
     
@@ -617,7 +611,7 @@ def _collectLogs(helper):
             This case should be uncommon and would usually be the indication of an error
         '''
         helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
-        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}
+        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}
     else:
         '''
             this is a cold start, use our config values input for since
@@ -626,7 +620,7 @@ def _collectLogs(helper):
         helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
-        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
+        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}        
 
     helper.log_debug("Calling _okta_caller")
     logs = _okta_caller(helper, resource, params, method, opt_limit)
