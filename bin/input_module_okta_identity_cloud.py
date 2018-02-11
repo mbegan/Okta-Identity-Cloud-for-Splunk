@@ -49,6 +49,11 @@ def _rateLimitEnforce(helper, headers, rc):
         mySecLeft = int(60)
         myPctLeft = float(50.0)
 
+    #if less than 1 second left just be 1
+    if mySecLeft < 1:
+        helper.log_debug(log_metric + "_rateLimitEnforce mySecLeft was less than 1, setting to 1 to avoid issues")
+        mySecLeft = 1
+
     helper.log_debug(log_metric + "_rateLimitEnforce Invoked. There are " + str(mySecLeft) + " seconds left in the window and we have " + str(myPctLeft) + " percent of the limit available.  The response code returned was " + str(rc) )
     if rc == 429:
         #the rate limit is exhausted, sleep
