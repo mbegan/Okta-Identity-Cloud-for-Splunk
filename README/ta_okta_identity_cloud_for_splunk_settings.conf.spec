@@ -20,4 +20,3 @@ log_history =
 throttle_threshold = 
 http_request_timeout = 
 skip_empty_pages = 
-use_now_for_until = 

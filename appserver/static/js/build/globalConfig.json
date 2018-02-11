@@ -366,25 +366,6 @@
                             "options": {
                                 "placeholder": "True"
                             }
-                        }, 
-                        {
-                            "validators": [
-                                {
-                                    "maxLength": 8192, 
-                                    "type": "string", 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "minLength": 0
-                                }
-                            ], 
-                            "help": "Changes the logic used to collect logs, only change if specifically advised by Okta to change", 
-                            "defaultValue": "True", 
-                            "field": "use_now_for_until", 
-                            "label": "Use \"now\" for log polling", 
-                            "type": "text", 
-                            "required": true, 
-                            "options": {
-                                "placeholder": "True"
-                            }
                         }
                     ], 
                     "name": "additional_parameters"

@@ -181,16 +181,6 @@ fields_additional_parameters = [
             min_len=0, 
             max_len=8192, 
         )
-    ), 
-    field.RestField(
-        'use_now_for_until',
-        required=True,
-        encrypted=False,
-        default='True',
-        validator=validator.String(
-            min_len=0, 
-            max_len=8192, 
-        )
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
