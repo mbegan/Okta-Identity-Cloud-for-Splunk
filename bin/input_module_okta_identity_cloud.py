@@ -617,6 +617,7 @@ def _collectLogs(helper):
         '''
         helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}
+
     else:
         '''
             this is a cold start, use our config values input for since
