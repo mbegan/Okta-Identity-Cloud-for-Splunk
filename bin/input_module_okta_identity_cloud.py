@@ -49,6 +49,11 @@ def _rateLimitEnforce(helper, headers, rc):
         mySecLeft = int(60)
         myPctLeft = float(50.0)
 
+    #if less than 1 second left just be 1
+    if mySecLeft < 1:
+        helper.log_debug(log_metric + "_rateLimitEnforce mySecLeft was less than 1, setting to 1 to avoid issues")
+        mySecLeft = 1
+
     helper.log_debug(log_metric + "_rateLimitEnforce Invoked. There are " + str(mySecLeft) + " seconds left in the window and we have " + str(myPctLeft) + " percent of the limit available.  The response code returned was " + str(rc) )
     if rc == 429:
         #the rate limit is exhausted, sleep
@@ -110,7 +115,6 @@ def _getSetting(helper, setting):
         'throttle_threshold': 25.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
-        'use_now_for_until': True,
         'skip_empty_pages': True
     }
 
@@ -413,8 +417,7 @@ def _collectGroups(helper):
     resource = "/groups"
     method = "Get"        
     opt_limit = int(_getSetting(helper,'group_limit'))
-    dtnow = datetime.now()
-    end_date = dtnow.isoformat()[:-3] + 'Z'
+
     start_lastUpdated = helper.get_check_point((cp_prefix + "groups_lastUpdated"))
     if ( (str(start_lastUpdated)) == "None" ):
         start_lastUpdated = "1970-01-01T00:00:00.000Z"
@@ -423,11 +426,12 @@ def _collectGroups(helper):
     if ( (str(start_lastMembershipUpdated)) == "None" ):
         start_lastMembershipUpdated = "1970-01-01T00:00:00.000Z"        
     
-    lastUpdated = '( (lastUpdated gt "' + start_lastUpdated + '") and (lastUpdated lt "' + end_date + '") )'
-    lastMembershipUpdated = '( (lastMembershipUpdated gt "' + start_lastMembershipUpdated + '") and (lastMembershipUpdated lt "' + end_date + '") )'
+    lastUpdated = '(lastUpdated gt "' + start_lastUpdated + '")'
+    lastMembershipUpdated = '(lastMembershipUpdated gt "' + start_lastMembershipUpdated + '")'
     
-    helper.log_debug(log_metric + " _collectGroups Invoked, searching for groups lastUpdated between " + start_lastUpdated + 
-     " and " + end_date + " or membershipUpdated between " + start_lastMembershipUpdated + " and " + end_date)
+    helper.log_debug(log_metric + " _collectGroups Invoked, searching for groups lastUpdated after " + start_lastUpdated + 
+     " or membershipUpdated after " + start_lastMembershipUpdated)
+
     myfilter = "( " + lastUpdated + " or " + lastMembershipUpdated + " )"
     params = {'filter': myfilter, 'limit': opt_limit, 'expand': 'stats,app'}
     groups = _okta_caller(helper, resource, params, method, opt_limit)
@@ -592,11 +596,6 @@ def _collectLogs(helper):
     dtnow = datetime.now()
     opt_limit = int(_getSetting(helper,'log_limit'))
 
-    if (_getSetting(helper,'use_now_for_until')):
-        until = 'now'
-    else:
-        until = dtnow.isoformat()[:-3] + 'Z'
-
     since = helper.get_check_point((cp_prefix + "logs_since"))
     n_val = helper.get_check_point((cp_prefix + "logs_n_val"))
     
@@ -617,7 +616,8 @@ def _collectLogs(helper):
             This case should be uncommon and would usually be the indication of an error
         '''
         helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
-        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}
+        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}
+
     else:
         '''
             this is a cold start, use our config values input for since
@@ -626,7 +626,7 @@ def _collectLogs(helper):
         helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
-        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since, 'until': until}        
+        params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}        
 
     helper.log_debug("Calling _okta_caller")
     logs = _okta_caller(helper, resource, params, method, opt_limit)
