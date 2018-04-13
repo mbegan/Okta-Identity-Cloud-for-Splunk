@@ -262,7 +262,7 @@ def _okta_caller(helper, resource, params, method, limit):
                     stashNVal = n_val
         if ( ("log" == opt_metric) and (r_count >= max_log_batch) ):
             '''
-                To avoid exhausing the Splunk server we are going to end this thread after we hit our max batch size
+                To avoid exhausting the Splunk server we are going to end this thread after we hit our max batch size
                 We will pick up on the next interval where we left off
             '''
             getPages = False
@@ -340,7 +340,7 @@ def _okta_client(helper, url, params, method):
         return sendBack
     
     if response.status_code == 429:
-        helper.log_error(log_metric + " _okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : rid=" + requestid)
+        helper.log_error(log_metric + "_okta_client returned an error: " + results['errorCode'] + " : " + results['errorSummary'] + " : rid=" + requestid)
         _rateLimitEnforce(helper, r_headers, response.status_code)
         # If we hit a 429 send back the current url as the n_val, we will pick up from there next time.
         sendBack = { 'results': {}, 'n_val': url }
@@ -359,7 +359,7 @@ def _okta_client(helper, url, params, method):
     
     _rateLimitEnforce(helper, r_headers, response.status_code)
     count = str(len(results))
-    helper.log_debug(log_metric + " _okta_client Returned: " + count + " records")
+    helper.log_debug(log_metric + "_okta_client Returned: " + count + " records")
     if 'next' in response.links:
         n_val = response.links['next']['url']
         helper.log_info(log_metric + "_okta_client sees another page at this URL: " + n_val )
@@ -384,7 +384,7 @@ def _collectUsers(helper):
     if ( (str(start_date)) == "None" ):
         start_date = "1970-01-01T00:00:00.000Z"
         
-    helper.log_debug(log_metric + " _collectUsers Invoked, searching for users lastUpdated between " + start_date + " and " + end_date)
+    helper.log_debug(log_metric + "_collectUsers Invoked, searching for users lastUpdated between " + start_date + " and " + end_date)
 
     myfilter = 'lastUpdated gt "' + start_date + '" and lastUpdated lt "' + end_date + '"'
     params = {'filter': myfilter, 'limit': opt_limit}
@@ -429,7 +429,7 @@ def _collectGroups(helper):
     lastUpdated = '(lastUpdated gt "' + start_lastUpdated + '")'
     lastMembershipUpdated = '(lastMembershipUpdated gt "' + start_lastMembershipUpdated + '")'
     
-    helper.log_debug(log_metric + " _collectGroups Invoked, searching for groups lastUpdated after " + start_lastUpdated + 
+    helper.log_debug(log_metric + "_collectGroups Invoked, searching for groups lastUpdated after " + start_lastUpdated + 
      " or membershipUpdated after " + start_lastMembershipUpdated)
 
     myfilter = "( " + lastUpdated + " or " + lastMembershipUpdated + " )"
@@ -480,8 +480,8 @@ def _collectGroups(helper):
             if group['_embedded']['stats']['groupPushMappingsCount'] > 0:
             '''
         
-        helper.log_debug(log_metric + " _collectGroups checkpoint lastUpdated last guess is " + start_lastUpdated)
-        helper.log_debug(log_metric + " _collectGroups checkpoint lastMembershipUpdated last guess is " + start_lastMembershipUpdated)
+        helper.log_debug(log_metric + "_collectGroups checkpoint lastUpdated last guess is " + start_lastUpdated)
+        helper.log_debug(log_metric + "_collectGroups checkpoint lastMembershipUpdated last guess is " + start_lastMembershipUpdated)
         helper.save_check_point((cp_prefix + "groups_lastUpdated"), start_lastUpdated)
         helper.save_check_point((cp_prefix + "groups_lastMembershipUpdated"), start_lastMembershipUpdated)
         
@@ -509,7 +509,7 @@ def _collectGroupUsers(helper, gid):
 def _collectGroupApps(helper, gid):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
-    helper.log_debug(log_metric + " _collectGroupApps has been invoked for: " + gid )
+    helper.log_debug(log_metric + "_collectGroupApps has been invoked for: " + gid )
     resource = "/groups/" + gid + "/apps"
     method = "Get"
     '''
@@ -666,7 +666,7 @@ def collect_events(helper, ew):
     loglevel = helper.get_log_level()
     helper.set_log_level(loglevel)
     
-    limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':100, 'maxSize': 100, 'maxHistory': 180 }, 
+    limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':1000, 'maxSize': 1000, 'maxHistory': 180 }, 
                'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
                'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
                'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
@@ -707,13 +707,15 @@ def collect_events(helper, ew):
     if opt_metric == "zset":
         helper.log_debug(log_metric + "Invoking a call to reset all of our checkpoints")
         # can i run a query to find my checkpoints dynamically?
-        reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
-        reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
-        reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
-        reset = helper.delete_check_point((cp_prefix + ":log:lastRun"))
-        reset = helper.delete_check_point((cp_prefix + ":app:lastRun"))
-        reset = helper.delete_check_point((cp_prefix + ":group:lastRun"))
-        reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
+        # reset = helper.delete_check_point((cp_prefix + "logs_lastUuid"))
+        # reset = helper.delete_check_point((cp_prefix + "logs_n_val"))
+        # reset = helper.delete_check_point((cp_prefix + "logs_since"))
+        # reset = helper.delete_check_point((cp_prefix + "users_lastUpdated"))
+        # reset = helper.delete_check_point((cp_prefix + "groups_lastUpdated"))
+        # reset = helper.delete_check_point((cp_prefix + ":log:lastRun"))
+        # reset = helper.delete_check_point((cp_prefix + ":app:lastRun"))
+        # reset = helper.delete_check_point((cp_prefix + ":group:lastRun"))
+        # reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
     
     elif opt_metric == "log":
         helper.log_debug(log_metric + "Invoking a call for logs.")

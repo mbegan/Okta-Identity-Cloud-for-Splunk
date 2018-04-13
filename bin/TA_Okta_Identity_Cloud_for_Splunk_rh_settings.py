@@ -96,7 +96,7 @@ fields_additional_parameters = [
         'max_log_batch',
         required=True,
         encrypted=False,
-        default='6000',
+        default='60000',
         validator=validator.String(
             min_len=0, 
             max_len=8192, 
@@ -136,7 +136,7 @@ fields_additional_parameters = [
         'log_limit',
         required=True,
         encrypted=False,
-        default='100',
+        default='1000',
         validator=validator.String(
             min_len=0, 
             max_len=8192, 
