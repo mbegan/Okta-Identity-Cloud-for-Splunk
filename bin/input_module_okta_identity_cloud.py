@@ -106,7 +106,7 @@ def _getSetting(helper, setting):
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_getSetting Invoked")
     myDefaults = {
-        'max_log_batch': 6000,
+        'max_log_batch': 60000,
         'user_limit': 200,
         'group_limit': 200,
         'app_limit': 200,
@@ -198,7 +198,7 @@ def _okta_caller(helper, resource, params, method, limit):
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
     except:
-        max_log_batch = int(6000)
+        max_log_batch = int(60000)
     
     try:
         skipEmptyPages = bool(_getSetting(helper,'skip_empty_pages'))
@@ -294,7 +294,7 @@ def _okta_client(helper, url, params, method):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
-    userAgent = "Splunk-AddOn/2.0b"
+    userAgent = "Splunk-AddOn/2.25.5"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']
     

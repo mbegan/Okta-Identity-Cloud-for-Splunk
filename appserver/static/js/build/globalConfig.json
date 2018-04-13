@@ -229,8 +229,8 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "Max batch size, used to protect from memory exhaustion on your splunk server.  6000 is default and recommended.", 
-                            "defaultValue": "6000", 
+                            "help": "Max batch size, used to protect from memory exhaustion on your splunk server.  60,000 is default and recommended.", 
+                            "defaultValue": "60000", 
                             "field": "max_log_batch", 
                             "label": "Maximum log batch size", 
                             "type": "text", 
@@ -510,11 +510,7 @@
                                     {
                                         "label": "Apps", 
                                         "value": "app"
-                                    }, 
-                                    {
-                                        "label": "Reset", 
-                                        "value": "zset"
-                                    }
+                                    } 
                                 ]
                             }
                         }, 
@@ -539,7 +535,7 @@
         "apiVersion": "3.0.0", 
         "name": "TA-Okta_Identity_Cloud_for_Splunk", 
         "displayName": "Okta Identity Cloud Add-on for Splunk", 
-        "version": "2.23", 
+        "version": "2.25.5", 
         "restRoot": "TA_Okta_Identity_Cloud_for_Splunk"
     }
 }
