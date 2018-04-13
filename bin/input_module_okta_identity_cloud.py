@@ -106,7 +106,7 @@ def _getSetting(helper, setting):
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_getSetting Invoked")
     myDefaults = {
-        'max_log_batch': 6000,
+        'max_log_batch': 60000,
         'user_limit': 200,
         'group_limit': 200,
         'app_limit': 200,
@@ -198,7 +198,7 @@ def _okta_caller(helper, resource, params, method, limit):
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
     except:
-        max_log_batch = int(6000)
+        max_log_batch = int(60000)
     
     try:
         skipEmptyPages = bool(_getSetting(helper,'skip_empty_pages'))
