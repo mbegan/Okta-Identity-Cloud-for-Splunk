@@ -245,7 +245,7 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases. (20-300)",
                             "defaultValue": "200", 
                             "field": "user_limit", 
                             "label": "User Limit", 
@@ -261,7 +261,7 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases. (20-300)",
                             "defaultValue": "200", 
                             "field": "group_limit", 
                             "label": "Group Limit", 
@@ -277,7 +277,7 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases. (20-300)",
                             "defaultValue": "200", 
                             "field": "app_limit", 
                             "label": "App Limit", 
@@ -293,8 +293,8 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases", 
-                            "defaultValue": "100", 
+                            "help": "Number of Items to collect per call for the specific data type, defaults are ideal in most cases. (10-1000)",
+                            "defaultValue": "1000", 
                             "field": "log_limit", 
                             "label": "Log Limit", 
                             "type": "text", 
@@ -309,7 +309,7 @@
                                     "minLength": 0
                                 }
                             ], 
-                            "help": "number of days in the past to collect. Max 90 Default 7 \n (history is only relevant with logs)", 
+                            "help": "number of days in the past to collect logs when a new input is created for an account. (0-90)",
                             "defaultValue": "7", 
                             "field": "log_history", 
                             "label": "Log History", 
