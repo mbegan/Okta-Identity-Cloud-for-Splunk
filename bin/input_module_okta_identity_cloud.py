@@ -573,7 +573,17 @@ def _collectAppUsers(helper, ew, aid):
     myArray = []
     for appUser in appUsers:
         if write_appUser:
-            myArray.append({ "appid": aid, "userid": appUser['id'], "externalId": appUser['externalId'], "userName": appUser['credentials']['userName'] })
+            myArray.append(
+                {   "appid": aid,
+                    "userid": appUser['id'],
+                    "externalId": appUser['externalId'],
+                    "userName": appUser['credentials']['userName'],
+                    "created": appUser['created'],
+                    "lastUpdated": appUser['lastUpdated'],
+                    "statusChanged": appUser['statusChanged'],
+                    "scope": appUser['scope'],
+                    "status": appUser['status']
+                })
         else:
             myArray.append(appUser['id'])
     
