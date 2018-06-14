@@ -582,7 +582,8 @@ def _collectAppUsers(helper, ew, aid):
                     "lastUpdated": appUser['lastUpdated'],
                     "statusChanged": appUser['statusChanged'],
                     "scope": appUser['scope'],
-                    "status": appUser['status']
+                    "status": appUser['status'],
+                    "smokeTest": appUser['smokeTest']
                 })
         else:
             myArray.append(appUser['id'])
