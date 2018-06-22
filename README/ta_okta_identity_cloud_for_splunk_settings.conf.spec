@@ -20,3 +20,6 @@ log_history =
 throttle_threshold = 
 http_request_timeout = 
 skip_empty_pages = 
+allow_proxy =
+write_appUser =
+write_groupUser =

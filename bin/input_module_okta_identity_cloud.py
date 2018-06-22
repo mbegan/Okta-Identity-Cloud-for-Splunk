@@ -230,7 +230,7 @@ def _okta_caller(helper, resource, params, method, limit):
 
         #special case here for 0 and logs
         if 0 == i_count:
-            helper.log_debug(log_metric + "_okta_caller we have 0 results returned, determining what to store for next run..." )
+            helper.log_debug(log_metric + "_okta_caller we have 0 results returned, determining what to store for next run" )
             getPages = False
             if "log" == opt_metric:
                 if n_val.startswith(myValidPattern):
@@ -251,7 +251,7 @@ def _okta_caller(helper, resource, params, method, limit):
             '''
                 potential hitch here: If a limit value is raised after initial collection has begun 
                 the number of results in each page will always be lower than our currently defined limit
-                because limit is a retained parameter in our next link...
+                because limit is a retained parameter in our next link
                 include something in the docs around this
             '''
             helper.log_debug(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates the next page is empty")
@@ -511,8 +511,13 @@ def _collectGroupUsers(helper, ew, gid):
             myArray.append(groupUser['id'])
             
     if write_groupUser:
-        _write_oktaResults(helper, ew, "groupUser", myArray)
-        return ["see groupUser events"]
+        if ( len(myArray) > 0 ):
+            helper.log_info(log_metric + "Writing " + (str(len(myArray))) + " groupUsers to splunk")
+            _write_oktaResults(helper, ew, "groupUser", myArray)
+            return ['see groupUser sourcetype']
+        else:
+            helper.log_info(log_metric + "Zero groupUsers returned")
+            return []
     else:
         return myArray
     
@@ -582,15 +587,19 @@ def _collectAppUsers(helper, ew, aid):
                     "lastUpdated": appUser['lastUpdated'],
                     "statusChanged": appUser['statusChanged'],
                     "scope": appUser['scope'],
-                    "status": appUser['status'],
-                    "smokeTest": appUser['smokeTest']
+                    "status": appUser['status']
                 })
         else:
             myArray.append(appUser['id'])
     
     if write_appUser:
-        _write_oktaResults(helper, ew, "appUser", myArray)
-        return ["see appUser events"]
+        if ( len(myArray) > 0 ):
+            helper.log_info(log_metric + "Writing " + (str(len(myArray))) + " appUsers to splunk")
+            _write_oktaResults(helper, ew, "appUser", myArray)
+            return ['see appUser sourcetype']
+        else:
+            helper.log_info(log_metric + "Zero appUsers returned")
+            return []
     else:
         return myArray
     
@@ -606,7 +615,7 @@ def _collectAppGroups(helper, aid):
     opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
     appGroups = _okta_caller(helper, resource, params, method, opt_limit)
-    
+
     assigned_groups = []
     for appGroup in appGroups:
         assigned_groups.append(appGroup['id'])
@@ -633,7 +642,7 @@ def _collectLogs(helper):
             We are picking up a stashed next link, this is the normal operating mode
             define a blank param obj since the next link contains everythign we need
         '''
-        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
+        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there" )
         resource = n_val
         params = {}
         helper.log_debug("deleting checkpoint")
@@ -644,7 +653,7 @@ def _collectLogs(helper):
             Not a cold start, use the checkpoint values for retrieval, this is a failsafe method
             This case should be uncommon and would usually be the indication of an error
         '''
-        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
+        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there" )
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}
 
     else:
@@ -652,7 +661,7 @@ def _collectLogs(helper):
             this is a cold start, use our config values input for since
         '''
         opt_history = int(_getSetting(helper,'log_history'))
-        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
+        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history" )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}        
@@ -689,7 +698,7 @@ def collect_events(helper, ew):
     """ Do this thing """
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
-    helper.log_debug(log_metric + "Fetching Metric.")
+    helper.log_debug(log_metric + "Fetching Metric")
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']    
     loglevel = helper.get_log_level()
@@ -747,45 +756,45 @@ def collect_events(helper, ew):
         # reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
     
     elif opt_metric == "log":
-        helper.log_debug(log_metric + "Invoking a call for logs.")
+        helper.log_debug(log_metric + "Invoking a call for logs")
         logs = _collectLogs(helper)
         if ( len(logs) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk")
             _write_oktaResults(helper, ew, opt_metric, logs)
         else:
-            helper.log_info(log_metric + "Zero logs returned...")
+            helper.log_info(log_metric + "Zero logs returned")
             
     elif opt_metric == "user":
-        helper.log_debug(log_metric + "Invoking a call for users.")
+        helper.log_debug(log_metric + "Invoking a call for users")
         users = _collectUsers(helper)
         
         if ( len(users) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk.")
+            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk")
             _write_oktaResults(helper, ew, opt_metric, users)
         else:
-            helper.log_debug(log_metric + "Zero users returned...")
+            helper.log_debug(log_metric + "Zero users returned")
             
     elif opt_metric == "group":
-        helper.log_debug(log_metric + "Invoking a call for groups.")
+        helper.log_debug(log_metric + "Invoking a call for groups")
         groups = _collectGroups(helper, ew)
         
         if ( len(groups) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk")
             _write_oktaResults(helper, ew, opt_metric, groups)
         else:
-            helper.log_info(log_metric + "Zero groups returned...")
+            helper.log_info(log_metric + "Zero groups returned")
             
     elif opt_metric == "app":
-        helper.log_debug(log_metric + "Invoking a call for apps.")
+        helper.log_debug(log_metric + "Invoking a call for apps")
         apps = _collectApps(helper, ew)
         
         if ( len(apps) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
+            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk")
             _write_oktaResults(helper, ew, opt_metric , apps)
         else:
-            helper.log_info(log_metric + "Zero apps returned...")
+            helper.log_info(log_metric + "Zero apps returned")
             
     else:
         #this is bad
-        helper.log_error(log_metric + "Something happened that should never have happend...")
+        helper.log_error(log_metric + "Something happened that should never have happend")
 
