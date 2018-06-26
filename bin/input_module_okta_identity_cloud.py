@@ -578,11 +578,16 @@ def _collectAppUsers(helper, ew, aid):
     myArray = []
     for appUser in appUsers:
         if write_appUser:
+            try:
+                myUsername = appUser['credentials']['userName']
+            except TypeError:
+                myUsername = "UnDefined"
+
             myArray.append(
                 {   "appid": aid,
                     "userid": appUser['id'],
                     "externalId": appUser['externalId'],
-                    "userName": appUser['credentials']['userName'],
+                    "userName": myUsername,
                     "created": appUser['created'],
                     "lastUpdated": appUser['lastUpdated'],
                     "statusChanged": appUser['statusChanged'],
