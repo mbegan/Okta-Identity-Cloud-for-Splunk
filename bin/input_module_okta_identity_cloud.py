@@ -8,7 +8,6 @@ import time
 import json
 import logging
 from datetime import datetime, timedelta
-from solnlib.server_info import ServerInfo
 
 '''
     IMPORTANT
@@ -87,7 +86,7 @@ def _rateLimitEnforce(helper, headers, rc):
             sleepTime = mySecLeft + 7
 
         if myPctLeft < throttle:
-            helper.log_warning(log_metric + "_rateLimitEnforce is now pausing operations for " + str(sleepTime) + " to avoid exhausting the rate limit" )
+            helper.log_info(log_metric + "_rateLimitEnforce is now pausing operations for " + str(sleepTime) + " to avoid exhausting the rate limit" )
             time.sleep(sleepTime)
             
     elif 400 <= rc <= 499:
@@ -110,12 +109,15 @@ def _getSetting(helper, setting):
         'user_limit': 200,
         'group_limit': 200,
         'app_limit': 200,
-        'log_limit': 100,
+        'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
-        'skip_empty_pages': True
+        'skip_empty_pages': True,
+        'allow_proxy': False,
+        'write_appUser': False,
+        'write_groupUser': False
     }
 
     # early fail if the setting we've been asked for isn't something we know about
@@ -139,16 +141,15 @@ def _getSetting(helper, setting):
 
     return myVal
 
-def _write_oktaResults(helper, ew, results):
+def _write_oktaResults(helper, ew, metric, results):
     global_account = helper.get_arg('global_account')
     okta_org = global_account['username']
     
-    opt_metric = helper.get_arg('metric')
-    log_metric = "metric=" + opt_metric + " | message="
+    log_metric = "metric=" + metric + " | message="
     helper.log_debug(log_metric + "_write_oktaResults Invoked")
     
     eventHost = okta_org
-    eventSourcetype = "OktaIM2:" + opt_metric
+    eventSourcetype = "OktaIM2:" + metric
     eventSource = "Okta:im2"
     eventTime = None
     for item in results:
@@ -162,12 +163,12 @@ def _write_oktaResults(helper, ew, results):
             derive the host
                 okta_org
         '''
-        if 'log' == opt_metric:
+        if 'log' == metric:
             eventTime = _fromIso8601ToUnix(item['published'])
-        elif 'app' == opt_metric:
-            pop = item.pop('_links','None')
-        elif opt_metric in ['user', 'group']:
-            pop = item.pop('_links','None')
+        elif 'app' == metric:
+            item.pop('_links','None')
+        elif metric in ['user', 'group']:
+            item.pop('_links','None')
             eventTime = _fromIso8601ToUnix(item['lastUpdated'])
             
         data = json.dumps(item)
@@ -229,7 +230,7 @@ def _okta_caller(helper, resource, params, method, limit):
 
         #special case here for 0 and logs
         if 0 == i_count:
-            helper.log_debug(log_metric + "_okta_caller we have 0 results returned, determining what to store for next run..." )
+            helper.log_debug(log_metric + "_okta_caller we have 0 results returned, determining what to store for next run" )
             getPages = False
             if "log" == opt_metric:
                 if n_val.startswith(myValidPattern):
@@ -250,7 +251,7 @@ def _okta_caller(helper, resource, params, method, limit):
             '''
                 potential hitch here: If a limit value is raised after initial collection has begun 
                 the number of results in each page will always be lower than our currently defined limit
-                because limit is a retained parameter in our next link...
+                because limit is a retained parameter in our next link
                 include something in the docs around this
             '''
             helper.log_debug(log_metric + "_okta_caller only returned " + str(i_count) + " results in this call, this indicates the next page is empty")
@@ -309,23 +310,24 @@ def _okta_client(helper, url, params, method):
                 'Content-Type': 'application/json',
                 'accept': 'application/json' }
 
-    if ServerInfo.is_cloud_instance:
-        helper.log_debug("This is a cloud instance, disable use of proxy")
-        response = helper.send_http_request \
-           (
-               url, method, parameters=params,
-               payload=None, headers=headers,
-               cookies=None, verify=True, cert=None,
-               timeout=reqTimeout, use_proxy=False
-            )
-    else:
-        helper.log_debug("This is NOT cloud instance, allow use of proxy if configured")
+    allow_proxy = bool(_getSetting(helper,'allow_proxy'))
+    if allow_proxy:
+        helper.log_info("Use of a proxy has been explicitly disabled")
         response = helper.send_http_request \
            (
                url, method, parameters=params,
                payload=None, headers=headers,
                cookies=None, verify=True, cert=None,
                timeout=reqTimeout
+            )
+    else:
+        helper.log_info("Use of the proxy has been enabled through explicit definition of allow_proxy")
+        response = helper.send_http_request \
+           (
+               url, method, parameters=params,
+               payload=None, headers=headers,
+               cookies=None, verify=True, cert=None,
+               timeout=reqTimeout, use_proxy=False
             )
 
     # get the response headers
@@ -408,7 +410,7 @@ def _collectUsers(helper):
             
     return users
     
-def _collectGroups(helper):
+def _collectGroups(helper, ew):
     #Distinct entry point for group collection
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
@@ -460,9 +462,9 @@ def _collectGroups(helper):
         for group in groups:
             #pop the _links object, it is pointless in this context
             try:
-                pop = group['_embedded']['stats'].pop('_links','None')
+                group['_embedded']['stats'].pop('_links','None')
                 if group['_embedded']['stats']['usersCount'] > 0:
-                    members = _collectGroupUsers(helper, group['id'])
+                    members = _collectGroupUsers(helper, ew, group['id'])
                 else:
                     members = []
                     
@@ -471,7 +473,7 @@ def _collectGroups(helper):
                 else:
                     assignedApps = []
             except KeyError:
-                members = _collectGroupUsers(helper, group['id'])
+                members = _collectGroupUsers(helper, ew, group['id'])
                 assignedApps = _collectGroupApps(helper, group['id'])
             
             group['members'] = members    
@@ -487,12 +489,13 @@ def _collectGroups(helper):
         
     return groups
     
-def _collectGroupUsers(helper, gid):
+def _collectGroupUsers(helper, ew, gid):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_collectGroupUsers has been invoked: " + gid )
     resource = "/groups/" + gid + "/skinny_users"
     method = "Get"
+    write_groupUser = bool(_getSetting(helper,'write_groupUser'))
     '''
         concerned that this limit won't be honored in pagination links triggering the bug i fear
     '''
@@ -500,11 +503,23 @@ def _collectGroupUsers(helper, gid):
     params = {'limit': opt_limit}
     groupUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
-    members = []
+    myArray = []
     for groupUser in groupUsers:
-        members.append(groupUser['id'])
-        
-    return members
+        if write_groupUser:
+            myArray.append( {"groupid": gid, "userid": groupUser['id']} )
+        else:
+            myArray.append(groupUser['id'])
+            
+    if write_groupUser:
+        if ( len(myArray) > 0 ):
+            helper.log_info(log_metric + "Writing " + (str(len(myArray))) + " groupUsers to splunk")
+            _write_oktaResults(helper, ew, "groupUser", myArray)
+            return ['see groupUser sourcetype']
+        else:
+            helper.log_info(log_metric + "Zero groupUsers returned")
+            return []
+    else:
+        return myArray
     
 def _collectGroupApps(helper, gid):
     opt_metric = helper.get_arg('metric')
@@ -525,7 +540,7 @@ def _collectGroupApps(helper, gid):
         
     return assignedApps
     
-def _collectApps(helper):
+def _collectApps(helper, ew):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     
@@ -538,7 +553,7 @@ def _collectApps(helper):
     
     for app in apps:
         #assigned_users
-        assignedUsers = _collectAppUsers(helper, app['id'])
+        assignedUsers = _collectAppUsers(helper, ew, app['id'])
         app['assigned_users'] = assignedUsers
         #assigned_groups
         assignedGroups = _collectAppGroups(helper, app['id'])
@@ -546,24 +561,52 @@ def _collectApps(helper):
         
     return apps
     
-def _collectAppUsers(helper, aid):
+def _collectAppUsers(helper, ew, aid):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_collectAppUsers has been invoked: " + aid )
     resource = "/apps/" + aid + "/skinny_users"
     method = "Get"
+    write_appUser = bool(_getSetting(helper,'write_appUser'))
     '''
         fear this limit won't be honored in pagination links triggering an early exit in _okta_caller
-    '''    
+    '''
     opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
     appUsers = _okta_caller(helper, resource, params, method, opt_limit)
     
-    assigned_users = []
+    myArray = []
     for appUser in appUsers:
-        assigned_users.append(appUser['id'])
-        
-    return assigned_users
+        if write_appUser:
+            try:
+                myUsername = appUser['credentials']['userName']
+            except TypeError:
+                myUsername = "UnDefined"
+
+            myArray.append(
+                {   "appid": aid,
+                    "userid": appUser['id'],
+                    "externalId": appUser['externalId'],
+                    "userName": myUsername,
+                    "created": appUser['created'],
+                    "lastUpdated": appUser['lastUpdated'],
+                    "statusChanged": appUser['statusChanged'],
+                    "scope": appUser['scope'],
+                    "status": appUser['status']
+                })
+        else:
+            myArray.append(appUser['id'])
+    
+    if write_appUser:
+        if ( len(myArray) > 0 ):
+            helper.log_info(log_metric + "Writing " + (str(len(myArray))) + " appUsers to splunk")
+            _write_oktaResults(helper, ew, "appUser", myArray)
+            return ['see appUser sourcetype']
+        else:
+            helper.log_info(log_metric + "Zero appUsers returned")
+            return []
+    else:
+        return myArray
     
 def _collectAppGroups(helper, aid):
     opt_metric = helper.get_arg('metric')
@@ -577,7 +620,7 @@ def _collectAppGroups(helper, aid):
     opt_limit = int(_getSetting(helper,'app_limit'))
     params = {'limit': opt_limit}
     appGroups = _okta_caller(helper, resource, params, method, opt_limit)
-    
+
     assigned_groups = []
     for appGroup in appGroups:
         assigned_groups.append(appGroup['id'])
@@ -604,7 +647,7 @@ def _collectLogs(helper):
             We are picking up a stashed next link, this is the normal operating mode
             define a blank param obj since the next link contains everythign we need
         '''
-        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there." )
+        helper.log_info(log_metric + "_collectLogs sees an existing next link value of: " + n_val + ", picking up from there" )
         resource = n_val
         params = {}
         helper.log_debug("deleting checkpoint")
@@ -615,7 +658,7 @@ def _collectLogs(helper):
             Not a cold start, use the checkpoint values for retrieval, this is a failsafe method
             This case should be uncommon and would usually be the indication of an error
         '''
-        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there." )
+        helper.log_info(log_metric + "_collectLogs sees an existing since value of: " + since + ", picking up from there" )
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}
 
     else:
@@ -623,7 +666,7 @@ def _collectLogs(helper):
             this is a cold start, use our config values input for since
         '''
         opt_history = int(_getSetting(helper,'log_history'))
-        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history." )
+        helper.log_debug(log_metric + "_collectLogs sees a coldstart for logs, collecting " + (str(opt_history)) + " days of history" )
         dtsince = dtnow - timedelta( days = int(opt_history))
         since = dtsince.isoformat()[:-3] + 'Z'
         params = {'sortOrder': 'ASCENDING', 'limit': opt_limit, 'since': since}        
@@ -660,7 +703,7 @@ def collect_events(helper, ew):
     """ Do this thing """
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
-    helper.log_debug(log_metric + "Fetching Metric.")
+    helper.log_debug(log_metric + "Fetching Metric")
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']    
     loglevel = helper.get_log_level()
@@ -718,45 +761,45 @@ def collect_events(helper, ew):
         # reset = helper.delete_check_point((cp_prefix + ":user:lastRun"))
     
     elif opt_metric == "log":
-        helper.log_debug(log_metric + "Invoking a call for logs.")
+        helper.log_debug(log_metric + "Invoking a call for logs")
         logs = _collectLogs(helper)
         if ( len(logs) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk.")
-            _write_oktaResults(helper, ew, logs)
+            helper.log_info(log_metric + "Writing " + (str(len(logs))) + " logs to splunk")
+            _write_oktaResults(helper, ew, opt_metric, logs)
         else:
-            helper.log_info(log_metric + "Zero logs returned...")
+            helper.log_info(log_metric + "Zero logs returned")
             
     elif opt_metric == "user":
-        helper.log_debug(log_metric + "Invoking a call for users.")
+        helper.log_debug(log_metric + "Invoking a call for users")
         users = _collectUsers(helper)
         
         if ( len(users) > 0 ):
-            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk.")
-            _write_oktaResults(helper, ew, users)
+            helper.log_debug(log_metric + "Writing " + (str(len(users))) + " users to splunk")
+            _write_oktaResults(helper, ew, opt_metric, users)
         else:
-            helper.log_debug(log_metric + "Zero users returned...")
+            helper.log_debug(log_metric + "Zero users returned")
             
     elif opt_metric == "group":
-        helper.log_debug(log_metric + "Invoking a call for groups.")
-        groups = _collectGroups(helper)
+        helper.log_debug(log_metric + "Invoking a call for groups")
+        groups = _collectGroups(helper, ew)
         
         if ( len(groups) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk.")
-            _write_oktaResults(helper, ew, groups)
+            helper.log_info(log_metric + "Writing " + (str(len(groups))) + " groups to splunk")
+            _write_oktaResults(helper, ew, opt_metric, groups)
         else:
-            helper.log_info(log_metric + "Zero groups returned...")
+            helper.log_info(log_metric + "Zero groups returned")
             
     elif opt_metric == "app":
-        helper.log_debug(log_metric + "Invoking a call for apps.")
-        apps = _collectApps(helper)
+        helper.log_debug(log_metric + "Invoking a call for apps")
+        apps = _collectApps(helper, ew)
         
         if ( len(apps) > 0 ):
-            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk.")
-            _write_oktaResults(helper, ew, apps)
+            helper.log_info(log_metric + "Writing " + (str(len(apps))) + " apps to splunk")
+            _write_oktaResults(helper, ew, opt_metric , apps)
         else:
-            helper.log_info(log_metric + "Zero apps returned...")
+            helper.log_info(log_metric + "Zero apps returned")
             
     else:
         #this is bad
-        helper.log_error(log_metric + "Something happened that should never have happend...")
+        helper.log_error(log_metric + "Something happened that should never have happend")
 
