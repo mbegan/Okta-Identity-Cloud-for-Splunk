@@ -314,7 +314,7 @@ def _okta_client(helper, url, params, method):
 
     allow_proxy = bool(_getSetting(helper,'allow_proxy'))
     verify_ssl_certs = bool(_getSetting(helper,'verify_ssl_certs'))
-    custom_ca_cert_bundle_path = bool(_getSetting(helper,'custom_ca_cert_bundle_path'))
+    custom_ca_cert_bundle_path = _getSetting(helper,'custom_ca_cert_bundle_path')
 
     #This will default to True, if the user has disabled it will become False
     sslVerify = verify_ssl_certs
