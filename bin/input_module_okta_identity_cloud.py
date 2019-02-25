@@ -295,7 +295,7 @@ def _okta_client(helper, url, params, method):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
-    userAgent = "Splunk-AddOn/2.25.6"
+    userAgent = "Splunk-AddOn/2.25.11"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']
     
