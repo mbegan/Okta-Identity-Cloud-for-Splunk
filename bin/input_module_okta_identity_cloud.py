@@ -331,6 +331,9 @@ def _okta_client(helper, url, params, method):
             #ok, override whatever bool param was set with this.
             helper.log_debug(log_metric + "_okta_client custom_ca_cert_bundle_path path is valid, overriding sslVerify")
             sslVerify = custom_ca_cert_bundle_path
+        else:
+            helper.log_debug(log_metric + "_okta_client custom_ca_cert_bundle_path path is NOT valid, ignoring")
+
 
     if allow_proxy:
         helper.log_info("Use of the proxy has been enabled through explicit definition of allow_proxy")
