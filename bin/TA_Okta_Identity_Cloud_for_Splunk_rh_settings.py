@@ -156,7 +156,7 @@ fields_additional_parameters = [
         'throttle_threshold',
         required=True,
         encrypted=False,
-        default='20',
+        default='25',
         validator=validator.String(
             min_len=0, 
             max_len=8192, 
@@ -200,7 +200,7 @@ fields_additional_parameters = [
         'custom_ca_cert_bundle_path',
         required=False,
         encrypted=False,
-        default='',
+        default=None,
         validator=validator.String(
             min_len=0, 
             max_len=8192, 

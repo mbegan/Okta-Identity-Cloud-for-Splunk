@@ -116,8 +116,10 @@ def _getSetting(helper, setting):
         'fetch_empty_pages': False,
         'skip_empty_pages': True,
         'allow_proxy': False,
-        'write_appUser': False,
-        'write_groupUser': False
+        'write_appUser': True,
+        'write_groupUser': True,
+        'verify_ssl_certs': True,
+        'custom_ca_cert_bundle_path': False
     }
 
     # early fail if the setting we've been asked for isn't something we know about
@@ -295,7 +297,7 @@ def _okta_client(helper, url, params, method):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
-    userAgent = "Splunk-AddOn/2.25.11"
+    userAgent = "Splunk-AddOn/2.25.12"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']
     
@@ -311,22 +313,38 @@ def _okta_client(helper, url, params, method):
                 'accept': 'application/json' }
 
     allow_proxy = bool(_getSetting(helper,'allow_proxy'))
+    verify_ssl_certs = bool(_getSetting(helper,'verify_ssl_certs'))
+    custom_ca_cert_bundle_path = bool(_getSetting(helper,'custom_ca_cert_bundle_path'))
+
+    #This will default to True, if the user has disabled it will become False
+    sslVerify = verify_ssl_certs
+    helper.log_debug(log_metric + "_okta_client Invoked with sslVerify set to: " + str(sslVerify))
+
+    #Requests uses the same verify param to use a custom bundle, if a custom bundle is defined verification is implied.
+    if (custom_ca_cert_bundle_path):
+        helper.log_debug(log_metric + "_okta_client Invoked with custom_ca_cert_bundle_path set to: " + str(custom_ca_cert_bundle_path))
+        #if it is set, is the path valid?
+        if os.path.exists(custom_ca_cert_bundle_path):
+            #ok, override whatever bool param was set with this.
+            helper.log_debug(log_metric + "_okta_client custom_ca_cert_bundle_path path is valid, overriding sslVerify")
+            sslVerify = custom_ca_cert_bundle_path
+
     if allow_proxy:
-        helper.log_info("Use of a proxy has been explicitly disabled")
-        response = helper.send_http_request \
-           (
-               url, method, parameters=params,
-               payload=None, headers=headers,
-               cookies=None, verify=True, cert=None,
-               timeout=reqTimeout
-            )
-    else:
         helper.log_info("Use of the proxy has been enabled through explicit definition of allow_proxy")
         response = helper.send_http_request \
            (
                url, method, parameters=params,
                payload=None, headers=headers,
-               cookies=None, verify=True, cert=None,
+               cookies=None, verify=sslVerify, cert=None,
+               timeout=reqTimeout
+            )
+    else:
+        helper.log_info("Use of a proxy has been explicitly disabled")
+        response = helper.send_http_request \
+           (
+               url, method, parameters=params,
+               payload=None, headers=headers,
+               cookies=None, verify=sslVerify, cert=None,
                timeout=reqTimeout, use_proxy=False
             )
 
