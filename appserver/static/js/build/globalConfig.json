@@ -366,6 +366,41 @@
                             "options": {
                                 "placeholder": "True"
                             }
+                        },
+                        {
+                            "help": "Turn this on to allow the proxy to function",
+                            "field": "allow_proxy",
+                            "defaultValue": false,
+                            "type": "checkbox",
+                            "label": "Allow Proxy",
+                            "required": false
+                        },
+                        {
+                            "help": "Toggle HTTP client behavior for validating certs",
+                            "field": "verify_ssl_certs",
+                            "defaultValue": true,
+                            "type": "checkbox",
+                            "label": "Verify SSL Certs",
+                            "required": false
+                        },
+                        {
+                            "help": "Configure this path if you need to use a custom CA bundle. Only required if a device is intercepting traffic and presenting a cert from an internal CA. When defined SSL verify is implied.",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "maxLength": 8192,
+                                    "minLength": 0,
+                                    "errorMsg": "Max length of text input is 8192"
+                                }
+                            ],
+                            "field": "custom_ca_cert_bundle_path",
+                            "defaultValue": "",
+                            "options": {
+                                "placeholder": "/path/to/custom_ca_bundle"
+                            },
+                            "type": "text",
+                            "label": "Custom CA Cert Bundle Path",
+                            "required": false
                         }
                     ], 
                     "name": "additional_parameters"
