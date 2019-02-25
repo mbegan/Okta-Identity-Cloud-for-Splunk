@@ -118,7 +118,7 @@ def _getSetting(helper, setting):
         'allow_proxy': False,
         'write_appUser': True,
         'write_groupUser': True,
-        'bypass_verify_ssl_certs': True,
+        'bypass_verify_ssl_certs': False,
         'custom_ca_cert_bundle_path': False
     }
 
