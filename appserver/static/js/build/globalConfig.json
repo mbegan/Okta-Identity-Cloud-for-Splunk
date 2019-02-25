@@ -377,10 +377,10 @@
                         },
                         {
                             "help": "Toggle HTTP client behavior for validating certs",
-                            "field": "verify_ssl_certs",
-                            "defaultValue": true,
+                            "field": "bypass_verify_ssl_certs",
+                            "defaultValue": false,
                             "type": "checkbox",
-                            "label": "Verify SSL Certs",
+                            "label": "Disable Verify SSL Certs",
                             "required": false
                         },
                         {

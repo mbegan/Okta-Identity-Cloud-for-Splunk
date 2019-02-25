@@ -118,7 +118,7 @@ def _getSetting(helper, setting):
         'allow_proxy': False,
         'write_appUser': True,
         'write_groupUser': True,
-        'verify_ssl_certs': True,
+        'bypass_verify_ssl_certs': True,
         'custom_ca_cert_bundle_path': False
     }
 
@@ -313,11 +313,14 @@ def _okta_client(helper, url, params, method):
                 'accept': 'application/json' }
 
     allow_proxy = bool(_getSetting(helper,'allow_proxy'))
-    verify_ssl_certs = bool(_getSetting(helper,'verify_ssl_certs'))
+    bypass_verify_ssl_certs = bool(_getSetting(helper,'bypass_verify_ssl_certs'))
     custom_ca_cert_bundle_path = _getSetting(helper,'custom_ca_cert_bundle_path')
 
-    #This will default to True, if the user has disabled it will become False
-    sslVerify = verify_ssl_certs
+    if bypass_verify_ssl_certs:
+        sslVerify = False
+    else:
+        sslVerify = True
+        
     helper.log_debug(log_metric + "_okta_client Invoked with sslVerify set to: " + str(sslVerify))
 
     #Requests uses the same verify param to use a custom bundle, if a custom bundle is defined verification is implied.

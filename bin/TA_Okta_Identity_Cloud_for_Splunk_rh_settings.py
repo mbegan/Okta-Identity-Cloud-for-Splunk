@@ -193,7 +193,7 @@ fields_additional_parameters = [
         'verify_ssl_certs',
         required=False,
         encrypted=False,
-        default=True,
+        default=False,
         validator=None
     ), 
     field.RestField(
