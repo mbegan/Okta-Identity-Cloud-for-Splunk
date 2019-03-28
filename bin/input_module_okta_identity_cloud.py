@@ -63,17 +63,35 @@ def _rateLimitEnforce(helper, headers, rc):
         #sleep only if rate limit reaches a rate, adapt based on exhaustion and time left
         # how many calls per second do we assume are happening
         cps=4
+        
         # percentage to start throttling at
-
         try:
             throttle = _getSetting(helper,'throttle_threshold')
             throttle = float(throttle)
         except:
             throttle=float(20.0)
 
+        # percentage to start throttling at
+        try:
+            warningpct = _getSetting(helper,'warning_threshold')
+            warningpct = float(warningpct)
+        except:
+            warningpct=float(50.0)
+
+        # Should we try to avoid warnings?
+        try:
+            avoidWarnings = _getSetting(helper,'avoid_warnings')
+            avoidWarnings = bool(avoidWarnings)
+        except:
+            avoidWarnings=True
+
         #divide by zero is no good
         if myRemaining == 0:
             myRemaining = 1
+        
+        # figure out what our number of remaining calls is taking warning limits into account
+        if avoidWarnings:
+            myRemaining = math.ceil(myRemaining * warningpct)
 
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
@@ -112,6 +130,7 @@ def _getSetting(helper, setting):
         'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
+        'warning_threshold': 75.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
         'skip_empty_pages': True,
