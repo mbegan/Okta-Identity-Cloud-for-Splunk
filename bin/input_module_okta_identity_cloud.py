@@ -92,7 +92,9 @@ def _rateLimitEnforce(helper, headers, rc):
         # figure out what our number of remaining calls is taking warning limits into account
         if avoidWarnings:
             helper.log_info(log_metric + "_rateLimitEnforce is applying a warning threshold adjustment" + str(myRemaining) + " before adjustment" )
-            myRemaining = math.ceil(myRemaining * warningpct)
+            myRemaining = (myRemaining * warningpct)
+            if myRemaining < 1:
+                myRemaining = 1
             helper.log_info(log_metric + "_rateLimitEnforce has applied the threshold adjustment" + str(myRemaining) + " after adjustment" )
 
         try:
