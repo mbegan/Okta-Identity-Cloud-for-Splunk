@@ -130,7 +130,7 @@ def _getSetting(helper, setting):
         'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
-        'warning_threshold': 75.0,
+        'warning_threshold': 50.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
         'skip_empty_pages': True,
@@ -138,7 +138,8 @@ def _getSetting(helper, setting):
         'write_appUser': True,
         'write_groupUser': True,
         'bypass_verify_ssl_certs': False,
-        'custom_ca_cert_bundle_path': False
+        'custom_ca_cert_bundle_path': False,
+        'avoid_warnings': True
     }
 
     # early fail if the setting we've been asked for isn't something we know about
