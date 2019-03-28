@@ -91,13 +91,20 @@ def _rateLimitEnforce(helper, headers, rc):
         
         # figure out what our number of remaining calls is taking warning limits into account
         if avoidWarnings:
+            helper.log_info(log_metric + "_rateLimitEnforce is applying a warning threshold adjustment" + str(myRemaining) + " before adjustment" )
             myRemaining = math.ceil(myRemaining * warningpct)
+            helper.log_info(log_metric + "_rateLimitEnforce has applied the threshold adjustment" + str(myRemaining) + " after adjustment" )
+
+        try:
+            myPctLeft = float(100 * myRemaining / myLimit)
+        except KeyError:
+            myPctLeft = float(10.0)
 
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
             sleepTime = mySecLeft * cps / myRemaining
         else:
-            sleepTime = mySecLeft * cps / myRemaining / 100
+            sleepTime = mySecLeft * cps / myRemaining / 10
  
         #never sleep much longer than reset time, saftey factor of 7 seconds
         if sleepTime > (mySecLeft + 7):
