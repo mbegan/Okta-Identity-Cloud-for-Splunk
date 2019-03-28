@@ -135,7 +135,7 @@ def _getSetting(helper, setting):
         'max_log_batch': 60000,
         'user_limit': 200,
         'group_limit': 200,
-        'app_limit': 200,
+        'app_limit': 500,
         'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
@@ -763,9 +763,9 @@ def collect_events(helper, ew):
     helper.set_log_level(loglevel)
     
     limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':1000, 'maxSize': 1000, 'maxHistory': 180 }, 
-               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 1000 },
+               'group': {'minTime': 899,   'minSize':20, 'defSize':500, 'maxSize': 1000 },
+               'app':   {'minTime': 86390, 'minSize':20, 'defSize':500, 'maxSize': 1000 },
                'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
     #Enforce minTimes at runtime
