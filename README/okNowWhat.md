@@ -1,12 +1,11 @@
 # I'm collecting data... now what do i do?
 
-So you are collecting data with this add-on and now you want to know what to do... welcome to the club.  I'm going to share a few ideas here and encourage those reading and interested to ask questions or provide in put by way of issues and pull reuests.
+So you are collecting data with this add-on and now you want to know what to do... welcome to the club.  I'm going to share a few ideas here and encourage those reading and interested to ask questions by opening issues and provide feedback by submitting pull reuests.
 
-first and foremost review the [data types](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/FAQ_DataTypes.md) doc to get a quick idea of what data is available.
-
-That take now of the Okta [event type catalog](https://developer.okta.com/docs/api/resources/event-types).
-
-Review the [System Log API Doc](https://developer.okta.com/docs/api/resources/system_log/#attributes) making a special note about [Event Correlation](https://developer.okta.com/docs/api/resources/system_log/#event-correlation).
+- First and foremost review the [data types](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/FAQ_DataTypes.md) doc to get a quick idea of what data is available.
+- Refer to the Okta [event type catalog](https://developer.okta.com/docs/api/resources/event-types).
+- Review the [System Log API Doc](https://developer.okta.com/docs/api/resources/system_log/#attributes) 
+  - Make a special note about [Event Correlation](https://developer.okta.com/docs/api/resources/system_log/#event-correlation).
 
 After that take a look at some of the ideas the rest of this doc has to share.
 
