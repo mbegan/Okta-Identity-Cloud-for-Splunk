@@ -23,8 +23,13 @@ Notes:
 - Might be worth running multiple intervals and thresholds:
   - 5 failures in 5 minutes is likely to be a user that forgot their password
   - 30 failures over 24 hours is probably not user error but detecting abuse after 24 hours might not be fast enough to prevent a breech
+- Filtering out known company IP addresse
+- Determine the appropriate geo granularity
+  - Examples shown uses country
 
-|Purpose|Reason|Notes|Sample Query|
-|------|------|------|------------------|
-|Failed attempts by User|Identify failed attempt patterns by username| . |`eventType=user.session.start outcome.result=FAILURE`\|`stats count by actor.alternateId`|
-|Failed attempts by IP Address|Identify failed attempt patterns by IP address.|- Filtering out known company IP addresses|`eventType=user.session.start outcome.result=FAILURE`\|`stats count by client.userAgent.rawUserAgent`|
+|Purpose|Reason|Sample Query|
+|------|------|------------------|
+|Failed attempts by User|Identify failed attempt patterns by username|`eventType=user.session.start outcome.result=FAILURE`\|`stats count by actor.alternateId`|
+|Failed attempts by IP Address|Identify failed attempt patterns by IP address.|`eventType=user.session.start outcome.result=FAILURE`\|`stats count by client.userAgent.rawUserAgent`|
+|Failed attempts by Geo (country, state or city)|Identify failed attempt patterns by geo|`eventType=user.session.start outcome.result=FAILURE`\|`stats count by client.geographicalContext.country, outcome.result`|
+|Success for many users from one IP|Identify IP addresses with successful logins for more than 1 user|`eventType=user.session.start outcome.result=SUCCESS`\|`stats count by client.ipAddress, outcome.result, actor.alternateId, actor.id`\|`stats sum(count) as TotalCount count by client.ipAddress, outcome.result`|
