@@ -8,6 +8,18 @@ first and foremost review the [data types](https://github.com/mbegan/Okta-Identi
 
 Get started with some basics
 
+#### List the different sourcetypes that are present in Splunk
+`* source=okta:im2 | stats count by sourcetype`
+ 
+#### Find list apps defined in Okta by their signOnMode (good example of ways to audit how apps are setup)
+`* sourcetype=OktaIM2:app | stats count by signOnMode`
+ 
+#### Find users in Okta that aren’t Okta “mastered” and the provide a count by the provider.name (AD domain)
+`* sourcetype=OktaIM2:user "credentials.provider.type"!=OKTA | stats count by host, credentials.provider.name`
+
+#### Find your most common (or least common) eventTypes
+`* sourcetype=OktaIM2:log | stats count by host, eventType`
+
 ## Specific eventTypes
 
 Dig a little deeper with some eventType specific guides
