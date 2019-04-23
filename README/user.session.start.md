@@ -26,7 +26,5 @@ Notes:
 
 |Purpose|Reason|Notes|Sample Query|
 |------|------|------|------------------|
-|Failed attempts by User|Identify failed attempt patterns by username| . |`eventType=user.session.start outcome.result=FAILURE
-\| stats count by actor.alternateId`|
-|Failed attempts by IP Address|Identify failed attempt patterns by IP address.|- Filtering out known company IP addresses|`eventType=user.session.start outcome.result=FAILURE
-\| stats count by client.userAgent.rawUserAgent`|
+|Failed attempts by User|Identify failed attempt patterns by username| . |`eventType=user.session.start outcome.result=FAILURE`\|`stats count by actor.alternateId`|
+|Failed attempts by IP Address|Identify failed attempt patterns by IP address.|- Filtering out known company IP addresses|`eventType=user.session.start outcome.result=FAILURE`\|`stats count by client.userAgent.rawUserAgent`|
