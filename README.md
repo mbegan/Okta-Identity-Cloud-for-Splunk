@@ -18,5 +18,5 @@ This Add-on provides inputs and CIM-compatible knowledge to use with other Splun
 
 ## Additional documentation, references or FAQs
 
-- [Details about data types](https://github.com/mbegan/Okta-Scripts/blob/master/saveEventLogs.md)
-- [Details about rate limiting](https://github.com/mbegan/Okta-Scripts/blob/master/saveEventLogs.md)
+- [Details about data types](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/FAQ_DataTypes.md)
+- [Details about rate limiting](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/FAQ_RateLimits.md)
