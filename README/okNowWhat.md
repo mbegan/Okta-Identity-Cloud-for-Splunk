@@ -36,6 +36,8 @@ Dig a little deeper with some eventType specific guides
 |----------|----------
 | [user.session.start](https://developer.okta.com/docs/api/resources/event-types/?q=user.session.start) | [User login to Okta](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/user.session.start.md) |
 
+Other eventTypes of note are maintained in the [Okta Event Types of Interest for Security Teams](https://github.com/OktaSecurityLabs/CheatSheets/blob/master/SecurityEvents.md)
+
 ## Patterns
 
-Interesting patterns to detect
+Interesting patterns to detect, some of this is discussed in the eventType specific guides.  Here are some generic patterns to be on the look out for.
