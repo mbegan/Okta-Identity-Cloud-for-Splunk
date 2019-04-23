@@ -71,18 +71,18 @@ Given what the data is it is important to keep these things in mind:
 
 ## Other questions and information
 
-### How do i set the input to run at a specific time of the day
+### How do I set the input to run at a specific time of the day
 
 This isn't really something you get to control but the add-on will run when the input is defined or enabled and this becomes the starting point for the schedule.  With that in mind if you had a job that was running daily you could disable it and then enable it at the time of the day you want it to run and it will, for the most part, execute at that time of the day.
 
-### How do i know if rate limit avoidance is working?
+### How do I know if rate limit avoidance is working?
 
 Coming Soon
 
-### How do i know if my log collection is keeping up?
+### How do I know if my log collection is keeping up?
 
 Coming Soon
 
-### I'm getting warnings, how do i make it stop
+### I'm getting warnings, how do I make it stop
 
-Alerts relative to warnings is a new issue that has come up.  The rate limit response headers do not allow for programatic enumeration of the rate limit warning threshold and it isn't a fixed value.  I am working on an to [Add new param to account for rate limit warning threshold](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/issues/19)
+Alerts relative to warnings is a new issue that has come up.  The rate limit response headers do not allow for programatic enumeration of the rate limit warning threshold and it isn't a fixed value.  There is an effort under way to [Add a new param to account for rate limit warning threshold](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/issues/19)
