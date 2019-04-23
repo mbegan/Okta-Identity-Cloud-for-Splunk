@@ -4,6 +4,12 @@ So you are collecting data with this add-on and now you want to know what to do.
 
 first and foremost review the [data types](https://github.com/mbegan/Okta-Identity-Cloud-for-Splunk/blob/master/README/FAQ_DataTypes.md) doc to get a quick idea of what data is available.
 
+That take now of the Okta [event type catalog](https://developer.okta.com/docs/api/resources/event-types).
+
+Review the [System Log API Doc](https://developer.okta.com/docs/api/resources/system_log/#attributes) making a special note about [Event Correlation](https://developer.okta.com/docs/api/resources/system_log/#event-correlation).
+
+After that take a look at some of the ideas the rest of this doc has to share.
+
 ## Basic queries
 
 Get started with some basics
