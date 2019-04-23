@@ -16,7 +16,7 @@ Get started with some basics
 #### Find list apps defined in Okta by their signOnMode (good example of ways to audit how apps are setup)
 ```sql
 * sourcetype=OktaIM2:app | stats count by signOnMode
-`
+```
  
 #### Find users in Okta that aren’t Okta “mastered” and the provide a count by the provider.name (AD domain)
 ```sql
