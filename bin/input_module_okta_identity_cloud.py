@@ -63,23 +63,50 @@ def _rateLimitEnforce(helper, headers, rc):
         #sleep only if rate limit reaches a rate, adapt based on exhaustion and time left
         # how many calls per second do we assume are happening
         cps=4
+        
         # percentage to start throttling at
-
         try:
             throttle = _getSetting(helper,'throttle_threshold')
             throttle = float(throttle)
         except:
             throttle=float(20.0)
 
+        # percentage to start throttling at
+        try:
+            warningpct = _getSetting(helper,'warning_threshold')
+            warningpct = float(warningpct)
+        except:
+            warningpct=float(50.0)
+
+        # Should we try to avoid warnings?
+        try:
+            avoidWarnings = _getSetting(helper,'avoid_warnings')
+            avoidWarnings = bool(avoidWarnings)
+        except:
+            avoidWarnings=True
+
         #divide by zero is no good
         if myRemaining == 0:
             myRemaining = 1
+        
+        # figure out what our number of remaining calls is taking warning limits into account
+        if avoidWarnings:
+            helper.log_info(log_metric + "_rateLimitEnforce is applying a warning threshold adjustment " + str(myRemaining) + " before adjustment" )
+            myRemaining = (myRemaining * warningpct / 100)
+            if myRemaining < 1:
+                myRemaining = 1
+            helper.log_info(log_metric + "_rateLimitEnforce has applied the threshold adjustment " + str(myRemaining) + " after adjustment" )
+
+        try:
+            myPctLeft = float(100 * myRemaining / myLimit)
+        except KeyError:
+            myPctLeft = float(10.0)
 
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
             sleepTime = mySecLeft * cps / myRemaining
         else:
-            sleepTime = mySecLeft * cps / myRemaining / 100
+            sleepTime = mySecLeft * cps / myRemaining / 10
  
         #never sleep much longer than reset time, saftey factor of 7 seconds
         if sleepTime > (mySecLeft + 7):
@@ -108,10 +135,11 @@ def _getSetting(helper, setting):
         'max_log_batch': 60000,
         'user_limit': 200,
         'group_limit': 200,
-        'app_limit': 200,
+        'app_limit': 500,
         'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
+        'warning_threshold': 50.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
         'skip_empty_pages': True,
@@ -119,7 +147,8 @@ def _getSetting(helper, setting):
         'write_appUser': True,
         'write_groupUser': True,
         'bypass_verify_ssl_certs': False,
-        'custom_ca_cert_bundle_path': False
+        'custom_ca_cert_bundle_path': False,
+        'avoid_warnings': True
     }
 
     # early fail if the setting we've been asked for isn't something we know about
@@ -734,9 +763,9 @@ def collect_events(helper, ew):
     helper.set_log_level(loglevel)
     
     limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':1000, 'maxSize': 1000, 'maxHistory': 180 }, 
-               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 1000 },
+               'group': {'minTime': 899,   'minSize':20, 'defSize':500, 'maxSize': 1000 },
+               'app':   {'minTime': 86390, 'minSize':20, 'defSize':500, 'maxSize': 1000 },
                'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
     #Enforce minTimes at runtime
