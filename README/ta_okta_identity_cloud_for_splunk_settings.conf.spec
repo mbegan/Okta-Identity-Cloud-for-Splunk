@@ -21,5 +21,5 @@ throttle_threshold =
 http_request_timeout = 
 skip_empty_pages = 
 allow_proxy = 
-verify_ssl_certs = 
+bypass_verify_ssl_certs = 
 custom_ca_cert_bundle_path = 

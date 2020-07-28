@@ -156,7 +156,7 @@ fields_additional_parameters = [
         'throttle_threshold',
         required=True,
         encrypted=False,
-        default='25',
+        default='20',
         validator=validator.String(
             min_len=0, 
             max_len=8192, 
@@ -190,7 +190,7 @@ fields_additional_parameters = [
         validator=None
     ), 
     field.RestField(
-        'verify_ssl_certs',
+        'bypass_verify_ssl_certs',
         required=False,
         encrypted=False,
         default=False,
@@ -200,7 +200,7 @@ fields_additional_parameters = [
         'custom_ca_cert_bundle_path',
         required=False,
         encrypted=False,
-        default=None,
+        default='',
         validator=validator.String(
             min_len=0, 
             max_len=8192, 
