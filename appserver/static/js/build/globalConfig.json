@@ -13,16 +13,16 @@
             "tabs": [
                 {
                     "name": "account",
-                    "title": "Account",
+                    "title": "Okta Accounts",
                     "table": {
                         "header": [
                             {
                                 "field": "name",
-                                "label": "Account name"
+                                "label": "Okta Account Name"
                             },
                             {
                                 "field": "username",
-                                "label": "Username"
+                                "label": "Okta Domain"
                             }
                         ],
                         "actions": [
@@ -34,10 +34,13 @@
                     "entity": [
                         {
                             "field": "name",
-                            "label": "Account name",
+                            "label": "Okta Account Name",
                             "type": "text",
                             "required": true,
-                            "help": "Enter a unique name for this account.",
+                            "help": "Enter a unique name for this Okta Account.",
+                            "options": {
+                                "placeholder": "Provide any unique and valid name here"
+                            },
                             "validators": [
                                 {
                                     "type": "string",
@@ -54,29 +57,32 @@
                         },
                         {
                             "field": "username",
-                            "label": "Username",
+                            "label": "Okta Domain",
                             "type": "text",
                             "required": true,
-                            "help": "Enter the username for this account.",
+                            "help": "Enter the Okta domain name for the account.",
                             "options": {
-                                "placeholder": "Enter the username here"
+                                "placeholder": "Enter the okta domain here (yourdomain.okta.com) * Don't use custom/vanity domain name * "
                             },
                             "validators": [
                                 {
                                     "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 200,
-                                    "errorMsg": "Length of username should be between 1 and 200"
+                                    "minLength": 8,
+                                    "maxLength": 1024,
+                                    "errorMsg": "Length of username should be between 8 and 1024"
                                 }
                             ]
                         },
                         {
                             "field": "password",
-                            "label": "Password",
+                            "label": "Okta API Token",
                             "type": "text",
                             "encrypted": true,
                             "required": true,
-                            "help": "Enter the password for this account.",
+                            "help": "Enter the API Token for this account -- https://developer.okta.com/docs/api/getting_started/getting_a_token.html",
+                            "options": {
+                                "placeholder": "Provide the API Token of your okta service account here"
+                            },
                             "validators": [
                                 {
                                     "type": "string",
