@@ -225,7 +225,7 @@ def _okta_caller(helper, resource, params, method, limit):
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']
     okta_org = global_account['username']
-    myValidPattern = ("https://" + okta_org + "/api/")
+    myValidPattern = ("https://" + okta_org + "/api/").lower()
     #settings
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
@@ -238,10 +238,12 @@ def _okta_caller(helper, resource, params, method, limit):
         skipEmptyPages = bool(True)
 
     #if I get a full URL as resource use it, this will happne if we are picking up from a previous page
-    if resource.startswith(myValidPattern):
+    if resource.lower().startswith(myValidPattern.lower()):
         url = resource
     else:
         url = "https://" + okta_org + "/api/v1" + resource
+    
+    url = url.lower()
     
     #make a first call
     response = _okta_client(helper, url, params, method)
@@ -326,7 +328,7 @@ def _okta_client(helper, url, params, method):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
-    userAgent = "Splunk-AddOn/2.25.17"
+    userAgent = "Splunk-AddOn/2.25.19"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']
     
