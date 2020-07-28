@@ -23,3 +23,5 @@ skip_empty_pages =
 allow_proxy = 
 bypass_verify_ssl_certs = 
 custom_ca_cert_bundle_path = 
+avoid_warnings = 
+warning_threshold = 

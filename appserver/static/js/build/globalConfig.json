@@ -2,7 +2,7 @@
     "meta": {
         "name": "TA-Okta_Identity_Cloud_for_Splunk",
         "displayName": "Okta Identity Cloud Add-on for Splunk",
-        "version": "2.25.17",
+        "version": "2.25.19",
         "apiVersion": "3.0.0",
         "restRoot": "TA_Okta_Identity_Cloud_for_Splunk"
     },
@@ -405,6 +405,33 @@
                             ],
                             "options": {
                                 "placeholder": "/path/to/custom_ca_bundle"
+                            }
+                        },
+                        {
+                            "field": "avoid_warnings",
+                            "label": "Avoid Rate Limit Warnings",
+                            "type": "checkbox",
+                            "help": "Enable throttling logic that attempts to avoid exceeding API throttling warning limits",
+                            "required": false,
+                            "defaultValue": true
+                        },
+                        {
+                            "field": "warning_threshold",
+                            "label": "Warning Threshold Percentage",
+                            "type": "text",
+                            "help": "Used to adjust rate limit avoidance target.  Tells add-on to use ONLY this percentage of API calls. Defaults to 50%",
+                            "required": false,
+                            "defaultValue": "50",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "minLength": 0,
+                                    "maxLength": 8192,
+                                    "errorMsg": "Max length of text input is 8192"
+                                }
+                            ],
+                            "options": {
+                                "placeholder": "50"
                             }
                         }
                     ]

@@ -205,6 +205,23 @@ fields_additional_parameters = [
             min_len=0, 
             max_len=8192, 
         )
+    ), 
+    field.RestField(
+        'avoid_warnings',
+        required=False,
+        encrypted=False,
+        default=True,
+        validator=None
+    ), 
+    field.RestField(
+        'warning_threshold',
+        required=False,
+        encrypted=False,
+        default='50',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
