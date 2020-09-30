@@ -63,23 +63,50 @@ def _rateLimitEnforce(helper, headers, rc):
         #sleep only if rate limit reaches a rate, adapt based on exhaustion and time left
         # how many calls per second do we assume are happening
         cps=4
+        
         # percentage to start throttling at
-
         try:
             throttle = _getSetting(helper,'throttle_threshold')
             throttle = float(throttle)
         except:
             throttle=float(20.0)
 
+        # percentage to start throttling at
+        try:
+            warningpct = _getSetting(helper,'warning_threshold')
+            warningpct = float(warningpct)
+        except:
+            warningpct=float(50.0)
+
+        # Should we try to avoid warnings?
+        try:
+            avoidWarnings = _getSetting(helper,'avoid_warnings')
+            avoidWarnings = bool(avoidWarnings)
+        except:
+            avoidWarnings=True
+
         #divide by zero is no good
         if myRemaining == 0:
             myRemaining = 1
+        
+        # figure out what our number of remaining calls is taking warning limits into account
+        if avoidWarnings:
+            helper.log_info(log_metric + "_rateLimitEnforce is applying a warning threshold adjustment " + str(myRemaining) + " before adjustment" )
+            myRemaining = (myRemaining * warningpct / 100)
+            if myRemaining < 1:
+                myRemaining = 1
+            helper.log_info(log_metric + "_rateLimitEnforce has applied the threshold adjustment " + str(myRemaining) + " after adjustment" )
+
+        try:
+            myPctLeft = float(100 * myRemaining / myLimit)
+        except KeyError:
+            myPctLeft = float(10.0)
 
         # How agressive do we throttle, less time to reset = more agressive sleep
         if mySecLeft * cps > myRemaining:
             sleepTime = mySecLeft * cps / myRemaining
         else:
-            sleepTime = mySecLeft * cps / myRemaining / 100
+            sleepTime = mySecLeft * cps / myRemaining / 10
  
         #never sleep much longer than reset time, saftey factor of 7 seconds
         if sleepTime > (mySecLeft + 7):
@@ -108,16 +135,20 @@ def _getSetting(helper, setting):
         'max_log_batch': 60000,
         'user_limit': 200,
         'group_limit': 200,
-        'app_limit': 200,
+        'app_limit': 500,
         'log_limit': 1000,
         'log_history': 7,
         'throttle_threshold': 25.0,
+        'warning_threshold': 50.0,
         'http_request_timeout': 90,
         'fetch_empty_pages': False,
         'skip_empty_pages': True,
         'allow_proxy': False,
-        'write_appUser': False,
-        'write_groupUser': False
+        'write_appUser': True,
+        'write_groupUser': True,
+        'bypass_verify_ssl_certs': False,
+        'custom_ca_cert_bundle_path': False,
+        'avoid_warnings': True
     }
 
     # early fail if the setting we've been asked for isn't something we know about
@@ -194,7 +225,7 @@ def _okta_caller(helper, resource, params, method, limit):
     global_account = helper.get_arg('global_account')
     cp_prefix = global_account['name']
     okta_org = global_account['username']
-    myValidPattern = ("https://" + okta_org + "/api/")
+    myValidPattern = ("https://" + okta_org + "/api/").lower()
     #settings
     try:
         max_log_batch = int(_getSetting(helper,'max_log_batch'))
@@ -207,10 +238,12 @@ def _okta_caller(helper, resource, params, method, limit):
         skipEmptyPages = bool(True)
 
     #if I get a full URL as resource use it, this will happne if we are picking up from a previous page
-    if resource.startswith(myValidPattern):
+    if resource.lower().startswith(myValidPattern.lower()):
         url = resource
     else:
         url = "https://" + okta_org + "/api/v1" + resource
+    
+    url = url.lower()
     
     #make a first call
     response = _okta_client(helper, url, params, method)
@@ -295,7 +328,7 @@ def _okta_client(helper, url, params, method):
     opt_metric = helper.get_arg('metric')
     log_metric = "metric=" + opt_metric + " | message="
     helper.log_debug(log_metric + "_okta_client Invoked with a url of: " + url)
-    userAgent = "Splunk-AddOn/2.25.6"
+    userAgent = "Splunk-AddOn/2.25.19"
     global_account = helper.get_arg('global_account')
     okta_token = global_account['password']
     
@@ -311,22 +344,44 @@ def _okta_client(helper, url, params, method):
                 'accept': 'application/json' }
 
     allow_proxy = bool(_getSetting(helper,'allow_proxy'))
-    if allow_proxy:
-        helper.log_info("Use of a proxy has been explicitly disabled")
-        response = helper.send_http_request \
-           (
-               url, method, parameters=params,
-               payload=None, headers=headers,
-               cookies=None, verify=True, cert=None,
-               timeout=reqTimeout
-            )
+    bypass_verify_ssl_certs = bool(_getSetting(helper,'bypass_verify_ssl_certs'))
+    custom_ca_cert_bundle_path = _getSetting(helper,'custom_ca_cert_bundle_path')
+
+    if bypass_verify_ssl_certs:
+        sslVerify = False
     else:
+        sslVerify = True
+        
+    helper.log_debug(log_metric + "_okta_client Invoked with sslVerify set to: " + str(sslVerify))
+
+    #Requests uses the same verify param to use a custom bundle, if a custom bundle is defined verification is implied.
+    if (custom_ca_cert_bundle_path):
+        helper.log_debug(log_metric + "_okta_client Invoked with custom_ca_cert_bundle_path set to: " + str(custom_ca_cert_bundle_path))
+        #if it is set, is the path valid?
+        if os.path.exists(custom_ca_cert_bundle_path):
+            #ok, override whatever bool param was set with this.
+            helper.log_debug(log_metric + "_okta_client custom_ca_cert_bundle_path path is valid, overriding sslVerify")
+            sslVerify = custom_ca_cert_bundle_path
+        else:
+            helper.log_debug(log_metric + "_okta_client custom_ca_cert_bundle_path path is NOT valid, ignoring")
+
+
+    if allow_proxy:
         helper.log_info("Use of the proxy has been enabled through explicit definition of allow_proxy")
         response = helper.send_http_request \
            (
                url, method, parameters=params,
                payload=None, headers=headers,
-               cookies=None, verify=True, cert=None,
+               cookies=None, verify=sslVerify, cert=None,
+               timeout=reqTimeout
+            )
+    else:
+        helper.log_info("Use of a proxy has been explicitly disabled")
+        response = helper.send_http_request \
+           (
+               url, method, parameters=params,
+               payload=None, headers=headers,
+               cookies=None, verify=sslVerify, cert=None,
                timeout=reqTimeout, use_proxy=False
             )
 
@@ -710,9 +765,9 @@ def collect_events(helper, ew):
     helper.set_log_level(loglevel)
     
     limits = { 'log':   {'minTime': 29,    'minSize':10, 'defSize':1000, 'maxSize': 1000, 'maxHistory': 180 }, 
-               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'group': {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 300 },
-               'app':   {'minTime': 86390, 'minSize':20, 'defSize':200, 'maxSize': 300 },
+               'user':  {'minTime': 899,   'minSize':20, 'defSize':200, 'maxSize': 1000 },
+               'group': {'minTime': 899,   'minSize':20, 'defSize':500, 'maxSize': 1000 },
+               'app':   {'minTime': 86390, 'minSize':20, 'defSize':500, 'maxSize': 1000 },
                'zset':  {'minTime': 86400, 'minSize':42, 'defSize':42,  'maxSize': 42  }, }
     
     #Enforce minTimes at runtime
