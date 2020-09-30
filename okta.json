@@ -1,6 +1,0 @@
-{
-  "name": "Splunk Technical Add-on (TA) for Okta",
-  "description": "A Splunk Technical Add-on (TA) for ingesting Okta logs and other data into your Splunk environment",
-  "url": "https://splunkbase.splunk.com/app/3682/",
-  "categories": ["user management", "authentication", "authorization", "mfa", "sso"]
-}

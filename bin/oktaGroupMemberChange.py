@@ -20,6 +20,38 @@ class AlertActionWorkeroktaGroupMemberChange(ModularAlertBase):
             self.log_error('max_log_batch is a mandatory setup parameter, but its value is None.')
             return False
 
+        if not self.get_global_setting("user_limit"):
+            self.log_error('user_limit is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("group_limit"):
+            self.log_error('group_limit is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("app_limit"):
+            self.log_error('app_limit is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("log_limit"):
+            self.log_error('log_limit is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("log_history"):
+            self.log_error('log_history is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("throttle_threshold"):
+            self.log_error('throttle_threshold is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("http_request_timeout"):
+            self.log_error('http_request_timeout is a mandatory setup parameter, but its value is None.')
+            return False
+
+        if not self.get_global_setting("skip_empty_pages"):
+            self.log_error('skip_empty_pages is a mandatory setup parameter, but its value is None.')
+            return False
+
         if not self.get_param("okta_org"):
             self.log_error('okta_org is a mandatory parameter, but its value is None.')
             return False
@@ -44,12 +76,12 @@ class AlertActionWorkeroktaGroupMemberChange(ModularAlertBase):
                 return 3
             status = modalert_oktaGroupMemberChange_helper.process_event(self, *args, **kwargs)
         except (AttributeError, TypeError) as ae:
-            self.log_error("Error: {}. Please double check spelling and also verify that a compatible version of Splunk_SA_CIM is installed.".format(ae.message))
+            self.log_error("Error: {}. Please double check spelling and also verify that a compatible version of Splunk_SA_CIM is installed.".format(str(ae)))
             return 4
         except Exception as e:
             msg = "Unexpected error: {}."
-            if e.message:
-                self.log_error(msg.format(e.message))
+            if e:
+                self.log_error(msg.format(str(e)))
             else:
                 import traceback
                 self.log_error(msg.format(traceback.format_exc()))

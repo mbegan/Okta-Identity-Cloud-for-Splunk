@@ -181,6 +181,47 @@ fields_additional_parameters = [
             min_len=0, 
             max_len=8192, 
         )
+    ), 
+    field.RestField(
+        'allow_proxy',
+        required=False,
+        encrypted=False,
+        default=False,
+        validator=None
+    ), 
+    field.RestField(
+        'bypass_verify_ssl_certs',
+        required=False,
+        encrypted=False,
+        default=False,
+        validator=None
+    ), 
+    field.RestField(
+        'custom_ca_cert_bundle_path',
+        required=False,
+        encrypted=False,
+        default='',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
+    ), 
+    field.RestField(
+        'avoid_warnings',
+        required=False,
+        encrypted=False,
+        default=True,
+        validator=None
+    ), 
+    field.RestField(
+        'warning_threshold',
+        required=False,
+        encrypted=False,
+        default='50',
+        validator=validator.String(
+            min_len=0, 
+            max_len=8192, 
+        )
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
